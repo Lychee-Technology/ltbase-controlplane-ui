@@ -1,0 +1,13 @@
+{
+  "stacks": [
+    {
+      "key": "prod",
+      "label": "Production",
+      "authBaseUrl": "https://auth.example.com",
+      "controlPlaneBaseUrl": "https://control-plane.example.com",
+      "apiBaseUrl": "https://api.example.com",
+      "oidcClientId": "ltbase-controlplane-ui",
+      "redirectUri": "https://admin.example.com/auth/callback"
+    }
+  ]
+}
