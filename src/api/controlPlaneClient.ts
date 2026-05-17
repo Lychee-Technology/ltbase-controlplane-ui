@@ -3,6 +3,7 @@ import type { ControlPlaneError, StackConfig } from '../types';
 export interface ControlPlaneClient {
   getStatus(): Promise<unknown>;
   getSchemaStatus(): Promise<unknown>;
+  listWorkflows(): Promise<unknown>;
   getCapabilityCatalog(): Promise<unknown>;
   putCapabilityCatalog(data: unknown): Promise<unknown>;
   getActionTemplateCatalog(): Promise<unknown>;
@@ -40,6 +41,7 @@ export function createControlPlaneClient(
   return {
     getStatus: () => request('/status'),
     getSchemaStatus: () => request('/schema-status'),
+    listWorkflows: () => request('/workflows'),
     getCapabilityCatalog: () => request('/catalogs/capabilities'),
     putCapabilityCatalog: (data) => request('/catalogs/capabilities', jsonRequest('PUT', data)),
     getActionTemplateCatalog: () => request('/catalogs/action-templates'),

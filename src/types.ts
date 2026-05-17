@@ -1,9 +1,29 @@
+export interface FirebaseAuthProviderConfig {
+  type: 'firebase';
+  name: string;
+  label: string;
+  firebaseProjectId: string;
+  firebaseApiKey: string;
+}
+
+export interface SupabaseAuthProviderConfig {
+  type: 'supabase';
+  name: string;
+  label: string;
+  supabaseUrl: string;
+  supabaseAnonKey: string;
+}
+
+export type AuthProviderConfig = FirebaseAuthProviderConfig | SupabaseAuthProviderConfig;
+
 export interface StackConfig {
   key: string;
   label: string;
+  projectId: string;
   authBaseUrl: string;
   controlPlaneBaseUrl: string;
   apiBaseUrl: string;
+  authProviders: AuthProviderConfig[];
   oidcClientId: string;
   redirectUri: string;
 }
@@ -17,6 +37,7 @@ export interface SessionState {
   refreshToken?: string;
   subject?: string;
   email?: string;
+  providerName?: string;
 }
 
 export interface ControlPlaneError {
@@ -33,4 +54,4 @@ export interface DraftRecord<T> {
   updatedAt: string;
 }
 
-export type WorkspaceKey = 'model' | 'security' | 'health' | 'referrals';
+export type WorkspaceKey = 'model' | 'workflow' | 'security' | 'health' | 'referrals';

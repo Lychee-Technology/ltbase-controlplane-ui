@@ -5,9 +5,11 @@ import type { StackConfig } from '../types';
 const stack: StackConfig = {
   key: 'prod',
   label: 'Production',
+  projectId: '11111111-1111-4111-8111-111111111111',
   authBaseUrl: 'https://auth.example.com',
   controlPlaneBaseUrl: 'https://control-plane.example.com',
   apiBaseUrl: 'https://api.example.com',
+  authProviders: [],
   oidcClientId: 'ltbase-controlplane-ui',
   redirectUri: 'https://admin.example.com/auth/callback',
 };
@@ -44,5 +46,17 @@ describe('createControlPlaneClient', () => {
       message: 'Admin role required',
       details: undefined,
     });
+  });
+
+  it('calls workflow endpoints with bearer auth', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ workflows: [] }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.listWorkflows();
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/control-plane/v1/workflows',
+      expect.objectContaining({ headers: expect.any(Headers) }),
+    );
   });
 });

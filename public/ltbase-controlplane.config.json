@@ -3,11 +3,28 @@
     {
       "key": "prod",
       "label": "Production",
+      "projectId": "ltbase-prod",
       "authBaseUrl": "https://auth.example.com",
       "controlPlaneBaseUrl": "https://control-plane.example.com",
       "apiBaseUrl": "https://api.example.com",
       "oidcClientId": "ltbase-controlplane-ui",
-      "redirectUri": "https://admin.example.com/auth/callback"
-    }
+        "redirectUri": "https://admin.example.com/auth/callback",
+        "authProviders": [
+          {
+            "type": "firebase",
+            "name": "firebase-google",
+            "label": "Firebase Google",
+            "firebaseProjectId": "ltbase-prod",
+            "firebaseApiKey": "firebase-api-key"
+          },
+          {
+            "type": "supabase",
+            "name": "supabase-google",
+            "label": "Supabase Google",
+            "supabaseUrl": "https://supabase.example.com",
+            "supabaseAnonKey": "supabase-anon-key"
+          }
+        ]
+      }
   ]
 }

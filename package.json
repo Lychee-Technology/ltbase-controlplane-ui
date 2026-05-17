@@ -7,12 +7,15 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
+    "render-runtime-config": "node ./scripts/render-runtime-config.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest",
     "lint": "tsc --noEmit"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.49.8",
     "@vitejs/plugin-react": "^4.3.4",
+    "firebase": "^11.7.1",
     "json-schema-editor-visual": "github:Lychee-Technology/json-schema-editor-visual",
     "lucide-react": "^0.469.0",
     "react": "^19.0.0",
