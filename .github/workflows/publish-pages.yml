@@ -1,0 +1,52 @@
+name: Publish Pages Runtime Config
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ github.repository }}-${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.DEFAULT_BRANCH }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Render runtime config
+        env:
+          CONTROLPLANE_UI_STACK_CONFIG: ${{ vars.CONTROLPLANE_UI_STACK_CONFIG }}
+        run: |
+          set -euo pipefail
+          node ./scripts/render-runtime-config.mjs
+
+      - name: Commit runtime config
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/ltbase-controlplane.config.json
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          git commit -m "chore: update runtime config"
+          local_commit_sha=$(git rev-parse HEAD)
+          git fetch origin "${DEFAULT_BRANCH}"
+          git checkout -B "${DEFAULT_BRANCH}" "origin/${DEFAULT_BRANCH}"
+          git cherry-pick "${local_commit_sha}"
+          git push origin HEAD:"${DEFAULT_BRANCH}"

@@ -30,6 +30,9 @@ The app loads `/ltbase-controlplane.config.json` at runtime. This file must cont
 - public OIDC/authservice client id
 - redirect URI
 
+Companion Pages repos should publish this file from the `CONTROLPLANE_UI_STACK_CONFIG` repo variable by running `.github/workflows/publish-pages.yml`.
+The Pages artifact also ships `public/_redirects` so direct OAuth callback hits to `/auth/callback` are rewritten to `index.html` and handled by the SPA.
+
 ## Schema Editor Boundary
 
 The local JSON Schema editor is intentionally output-only:

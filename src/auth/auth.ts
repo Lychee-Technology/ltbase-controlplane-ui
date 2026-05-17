@@ -1,35 +1,41 @@
 import type { SessionState, StackConfig } from '../types';
 
-export function buildLoginURL(stack: StackConfig, state: string): string {
-  const url = new URL('/oauth/authorize', stack.authBaseUrl);
-  url.searchParams.set('client_id', stack.oidcClientId);
-  url.searchParams.set('redirect_uri', stack.redirectUri);
-  url.searchParams.set('response_type', 'code');
-  url.searchParams.set('scope', 'openid email profile');
-  url.searchParams.set('state', state);
-  return url.toString();
-}
-
-export function parseAuthCallback(callbackURL: string): { code: string; state: string } {
-  const url = new URL(callbackURL);
-  const code = url.searchParams.get('code');
-  const state = url.searchParams.get('state');
-  if (!code || !state) {
-    throw new Error('auth callback requires code and state');
-  }
-  return { code, state };
-}
-
-export async function exchangeCodeForSession(
+export async function exchangeExternalToken(
   stack: StackConfig,
-  code: string,
+  providerName: string,
+  externalToken: string,
   fetchImpl: typeof fetch = fetch,
 ): Promise<SessionState> {
-  const response = await fetchImpl(`${stack.authBaseUrl}/api/v1/login/oidc`, {
+  const response = await fetchImpl(`${stack.authBaseUrl}/api/v1/login/${encodeURIComponent(providerName)}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-    body: JSON.stringify({ code, project_id: stack.key }),
+    headers: {
+      Authorization: `Bearer ${externalToken}`,
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify({ project_id: stack.projectId }),
   });
+  return parseSessionResponse(response);
+}
+
+export async function refreshSession(
+  stack: StackConfig,
+  refreshToken: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<SessionState> {
+  const response = await fetchImpl(`${stack.authBaseUrl}/api/v1/auth/refresh`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${refreshToken}`,
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify({ project_id: stack.projectId }),
+  });
+  return parseSessionResponse(response);
+}
+
+async function parseSessionResponse(response: Response): Promise<SessionState> {
   if (!response.ok) {
     throw new Error(`token exchange failed: ${response.status}`);
   }
