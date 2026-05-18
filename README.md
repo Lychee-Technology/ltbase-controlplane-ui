@@ -17,7 +17,16 @@ Useful checks:
 npm run typecheck
 npm test -- --run
 npm run build
+npm run build:release-artifact
 ```
+
+## Release Artifact
+
+Official LTBase product releases consume a versioned static UI artifact from this repository.
+
+`npm run build:release-artifact` produces `dist/release/ltbase-controlplane-ui.tar.gz`.
+The tarball contains a deployable static site root, including `_redirects`, but it must not contain `ltbase-controlplane.config.json`.
+Customer-specific runtime config is injected later by the private deployment workflow for each deployment repository.
 
 ## Runtime Configuration
 
@@ -30,8 +39,7 @@ The app loads `/ltbase-controlplane.config.json` at runtime. This file must cont
 - public OIDC/authservice client id
 - redirect URI
 
-Companion Pages repos should publish this file from the `CONTROLPLANE_UI_STACK_CONFIG` repo variable by running `.github/workflows/publish-pages.yml`.
-The Pages artifact also ships `public/_redirects` so direct OAuth callback hits to `/auth/callback` are rewritten to `index.html` and handled by the SPA.
+The built site ships `_redirects` so direct OAuth callback hits to `/auth/callback` are rewritten to `index.html` and handled by the SPA.
 
 ## Schema Editor Boundary
 
