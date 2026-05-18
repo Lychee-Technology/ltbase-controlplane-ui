@@ -7,24 +7,24 @@ This repository owns the React/TypeScript frontend. It is deployed to Cloudflare
 ## Development
 
 ```bash
-npm install
-npm run dev
+pnpm install --frozen-lockfile
+pnpm run dev
 ```
 
 Useful checks:
 
 ```bash
-npm run typecheck
-npm test -- --run
-npm run build
-npm run build:release-artifact
+pnpm run typecheck
+pnpm test -- --run
+pnpm run build
+pnpm run build:release-artifact
 ```
 
 ## Release Artifact
 
 Official LTBase product releases consume a versioned static UI artifact from this repository.
 
-`npm run build:release-artifact` produces `dist/release/ltbase-controlplane-ui.tar.gz`.
+`pnpm run build:release-artifact` produces `dist/release/ltbase-controlplane-ui.tar.gz`.
 The tarball contains a deployable static site root, including `_redirects`, but it must not contain `ltbase-controlplane.config.json`.
 Customer-specific runtime config is injected later by the private deployment workflow for each deployment repository.
 
