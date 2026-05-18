@@ -4,6 +4,8 @@ Customer-facing Control Plane Web UI for LTBase private deployments.
 
 This repository owns the React/TypeScript frontend. It is deployed to Cloudflare Pages and calls each stack's Control Plane API with an LTBase admin JWT.
 
+The UI source lives here, but the official customer-consumable release artifact is published through the unified LTBase application release pipeline. A new `release_id` should package both backend artifacts and the Control Plane UI artifact together in `ltbase-releases`.
+
 ## Development
 
 ```bash
@@ -39,6 +41,7 @@ The app loads `/ltbase-controlplane.config.json` at runtime. This file must cont
 - public OIDC/authservice client id
 - redirect URI
 
+Customer deployment repositories render this file from their own `CONTROLPLANE_UI_STACK_CONFIG` deployment variable during rollout, then the reusable deployment workflows inject it into the official Control Plane UI release artifact before publishing to Cloudflare Pages.
 The built site ships `_redirects` so direct OAuth callback hits to `/auth/callback` are rewritten to `index.html` and handled by the SPA.
 
 ## Schema Editor Boundary
