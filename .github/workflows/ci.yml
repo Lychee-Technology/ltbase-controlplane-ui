@@ -10,11 +10,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.21.0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npm run typecheck
-      - run: npm test -- --run
-      - run: npm run build
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run typecheck
+      - run: pnpm test -- --run
+      - run: pnpm run build
+      - run: pnpm run build:release-artifact
+      - name: Verify packaged artifact
+        run: |
+          set -euo pipefail
+          artifact="dist/release/ltbase-controlplane-ui.tar.gz"
+          test -f "${artifact}"
+          unpack_dir="$(mktemp -d)"
+          tar -xzf "${artifact}" -C "${unpack_dir}"
+          test -f "${unpack_dir}/index.html"
+          test -f "${unpack_dir}/_redirects"
+          test ! -f "${unpack_dir}/ltbase-controlplane.config.json"
