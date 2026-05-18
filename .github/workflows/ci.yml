@@ -18,3 +18,14 @@ jobs:
       - run: npm run typecheck
       - run: npm test -- --run
       - run: npm run build
+      - run: npm run build:release-artifact
+      - name: Verify packaged artifact
+        run: |
+          set -euo pipefail
+          artifact="dist/release/ltbase-controlplane-ui.tar.gz"
+          test -f "${artifact}"
+          unpack_dir="$(mktemp -d)"
+          tar -xzf "${artifact}" -C "${unpack_dir}"
+          test -f "${unpack_dir}/index.html"
+          test -f "${unpack_dir}/_redirects"
+          test ! -f "${unpack_dir}/ltbase-controlplane.config.json"
