@@ -66,8 +66,9 @@ export function parseSchemaStatus(payload: unknown): SchemaStatus {
 export function parseAuthSummary(payload: unknown): { summary: AuthSummary; authModel: AuthorizationModel } {
   const data = pluckData(payload) as Record<string, unknown>;
   const rawSummary = (data.summary ?? {}) as Record<string, unknown>;
+  // No `summary.org_units` count exists in the DTO (summary only carries
+  // `ou_policies`), so OU count is derived from the org_units array length.
   const orgUnits = Array.isArray(data.org_units) ? data.org_units : [];
-  const warnings = Array.isArray(data.warnings) ? data.warnings : [];
   const rawModel = (data.authorization_model ?? {}) as Record<string, unknown>;
 
   return {
@@ -77,7 +78,7 @@ export function parseAuthSummary(payload: unknown): { summary: AuthSummary; auth
       policies: Number(rawSummary.policies ?? 0),
       orgUnits: orgUnits.length,
       referrals: Number(rawSummary.referrals ?? 0),
-      warnings: warnings.length,
+      warnings: Number(rawSummary.warnings ?? 0),
     },
     authModel: {
       canonicalObject: String(rawModel.canonical_object ?? ''),
@@ -92,7 +93,10 @@ export function parseAuthSummary(payload: unknown): { summary: AuthSummary; auth
 
 function pluckData(payload: unknown): unknown {
   if (payload && typeof payload === 'object' && 'data' in payload) {
-    return (payload as Record<string, unknown>).data;
+    const data = (payload as Record<string, unknown>).data;
+    if (data && typeof data === 'object') {
+      return data;
+    }
   }
   return {};
 }

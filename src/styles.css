@@ -214,12 +214,8 @@ select,
   grid-column: span 2;
 }
 
-.dashboard .panel:first-child {
-  grid-column: 1;
-}
-
-.dashboard .panel:nth-child(2) {
-  grid-column: 2;
+.dashboard .panel-half {
+  grid-column: span 1;
 }
 
 .dashboard-empty,
@@ -344,8 +340,7 @@ select,
     grid-template-columns: 1fr;
   }
 
-  .dashboard .panel:first-child,
-  .dashboard .panel:nth-child(2) {
+  .dashboard .panel-half {
     grid-column: span 1;
   }
 

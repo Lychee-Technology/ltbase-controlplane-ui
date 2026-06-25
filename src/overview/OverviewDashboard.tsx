@@ -81,7 +81,7 @@ export function OverviewDashboard({ client, onNavigate }: Props) {
     );
   }
 
-  if (state.kind === 'loading') {
+  if (state.kind === 'loading' || state.kind === 'idle') {
     return (
       <section className="panel dashboard-empty">
         <div className="panel-heading">
@@ -109,10 +109,6 @@ export function OverviewDashboard({ client, onNavigate }: Props) {
     );
   }
 
-  if (state.kind === 'idle') {
-    return null;
-  }
-
   const { project, schema: schemaStatus, summary, authModel } = state;
 
   const hasApplied = schemaStatus.appliedVersion !== '';
@@ -120,7 +116,7 @@ export function OverviewDashboard({ client, onNavigate }: Props) {
 
   return (
     <div className="dashboard">
-      <section className="panel">
+      <section className="panel panel-half">
         <div className="panel-heading">
           <div>
             <p className="eyebrow">Project</p>
@@ -138,7 +134,7 @@ export function OverviewDashboard({ client, onNavigate }: Props) {
         </dl>
       </section>
 
-      <section className="panel">
+      <section className="panel panel-half">
         <div className="panel-heading">
           <div>
             <p className="eyebrow">Schema</p>

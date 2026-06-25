@@ -135,7 +135,7 @@ describe('parseAuthSummary', () => {
     expect(authModel.policyDependsOnPermission).toBe(false);
   });
 
-  it('computes warnings count from the warnings array length', () => {
+  it('reads warnings count from the authoritative summary field, not the array length', () => {
     const payload = {
       data: {
         summary: { warnings: 5 },
@@ -145,6 +145,6 @@ describe('parseAuthSummary', () => {
 
     const { summary } = parseAuthSummary(payload);
 
-    expect(summary.warnings).toBe(3);
+    expect(summary.warnings).toBe(5);
   });
 });
