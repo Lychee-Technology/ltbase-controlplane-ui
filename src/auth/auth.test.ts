@@ -66,6 +66,62 @@ describe('exchangeExternalToken', () => {
       refreshToken: 'ltbase-refresh',
     });
   });
+
+  it('throws ControlPlaneError with request_id on auth failure', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      json: async () => ({ code: 'unauthorized', message: 'invalid provider token', request_id: 'req-xyz' }),
+    });
+
+    await expect(
+      exchangeExternalToken(stack, 'firebase', 'bad-token', fetchImpl as unknown as typeof fetch),
+    ).rejects.toEqual({
+      code: 'unauthorized',
+      message: 'invalid provider token',
+      status: 401,
+      requestId: 'req-xyz',
+      details: undefined,
+      kind: 'auth',
+    });
+  });
+
+  it('throws a kind:auth ControlPlaneError when the OK response is missing access_token', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ refresh_token: 'only-refresh' }),
+    });
+
+    await expect(
+      exchangeExternalToken(stack, 'firebase', 'provider-jwt', fetchImpl as unknown as typeof fetch),
+    ).rejects.toEqual({
+      code: 'auth_error',
+      message: 'token exchange response missing access_token',
+      status: 200,
+      kind: 'auth',
+    });
+  });
+
+  it('throws fallback ControlPlaneError on non-JSON auth error', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: async () => {
+        throw new Error('not json');
+      },
+      text: async () => 'Internal Server Error',
+    });
+
+    await expect(
+      exchangeExternalToken(stack, 'firebase', 'token', fetchImpl as unknown as typeof fetch),
+    ).rejects.toEqual({
+      code: 'http_500',
+      message: 'Auth error: HTTP 500',
+      status: 500,
+      kind: 'auth',
+    });
+  });
 });
 
 describe('refreshSession', () => {

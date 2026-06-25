@@ -24,6 +24,7 @@ import type {
   StackConfig,
   WorkspaceKey,
 } from './types';
+import { formatControlPlaneError } from './types';
 import './styles.css';
 
 const workspaces: Array<{ key: WorkspaceKey; label: string; icon: ReactNode }> = [
@@ -57,7 +58,7 @@ export default function App() {
         setStatus('Runtime config loaded');
       })
       .catch((error: unknown) => {
-        setStatus(error instanceof Error ? error.message : 'Failed to load runtime config');
+        setStatus(formatControlPlaneError(error));
       });
   }, []);
 
@@ -132,7 +133,7 @@ export default function App() {
         clearPendingLogin(window.sessionStorage, selectedStack.key);
         delete activeProviderByStackRef.current[selectedStack.key];
         setSession(null);
-        setStatus(error instanceof Error ? error.message : 'Session refresh failed');
+        setStatus(formatControlPlaneError(error));
       })
       .finally(() => {
         if (refreshingRestoredSessions.get(selectedStack.key) === restoredSession.refreshToken) {
@@ -229,7 +230,7 @@ export default function App() {
       if (selectedStackKeyRef.current !== stack.key || sessionInteractionRef.current !== interactionId) {
         return;
       }
-      setStatus(error instanceof Error ? error.message : 'Login failed');
+      setStatus(formatControlPlaneError(error));
     }
   }
 
