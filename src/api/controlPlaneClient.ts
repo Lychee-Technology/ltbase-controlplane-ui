@@ -1,8 +1,10 @@
-import type { ControlPlaneError, StackConfig } from '../types';
+import type { StackConfig } from '../types';
+import { jsonRequest, requestJSON } from './http';
 
 export interface ControlPlaneClient {
   getStatus(): Promise<unknown>;
   getSchemaStatus(): Promise<unknown>;
+  getAuthConfig(): Promise<unknown>;
   listWorkflows(): Promise<unknown>;
   getCapabilityCatalog(): Promise<unknown>;
   putCapabilityCatalog(data: unknown): Promise<unknown>;
@@ -13,7 +15,7 @@ export interface ControlPlaneClient {
   listReferrals(query?: string): Promise<unknown>;
   importReferrals(data: unknown): Promise<unknown>;
   dryRunRepair(): Promise<unknown>;
-  applyRepair(confirmation: string): Promise<unknown>;
+  applyRepair(): Promise<unknown>;
 }
 
 export function createControlPlaneClient(
@@ -21,62 +23,35 @@ export function createControlPlaneClient(
   accessToken: string,
   fetchImpl: typeof fetch = fetch,
 ): ControlPlaneClient {
-  const baseURL = `${stack.controlPlaneBaseUrl}/api/control-plane/v1`;
+  const baseURL = `${stack.controlPlaneBaseUrl}/api/v1`;
 
-  async function request(path: string, init: RequestInit = {}): Promise<unknown> {
-    const headers = new Headers(init.headers);
-    headers.set('Authorization', `Bearer ${accessToken}`);
-    headers.set('Accept', 'application/json');
-    if (init.body !== undefined && !headers.has('Content-Type')) {
-      headers.set('Content-Type', 'application/json');
-    }
-    const response = await fetchImpl(`${baseURL}${path}`, { ...init, headers });
-    const body = await readJSON(response);
-    if (!response.ok) {
-      throw normalizeControlPlaneError(body, response.status);
-    }
-    return body;
+  function get(path: string): Promise<unknown> {
+    return requestJSON(baseURL, path, accessToken, undefined, fetchImpl);
+  }
+
+  function put(path: string, data: unknown): Promise<unknown> {
+    return requestJSON(baseURL, path, accessToken, jsonRequest('PUT', data), fetchImpl);
+  }
+
+  function post(path: string, data: unknown): Promise<unknown> {
+    return requestJSON(baseURL, path, accessToken, jsonRequest('POST', data), fetchImpl);
   }
 
   return {
-    getStatus: () => request('/status'),
-    getSchemaStatus: () => request('/schema-status'),
-    listWorkflows: () => request('/workflows'),
-    getCapabilityCatalog: () => request('/catalogs/capabilities'),
-    putCapabilityCatalog: (data) => request('/catalogs/capabilities', jsonRequest('PUT', data)),
-    getActionTemplateCatalog: () => request('/catalogs/action-templates'),
-    putActionTemplateCatalog: (data) => request('/catalogs/action-templates', jsonRequest('PUT', data)),
-    getComplianceProfile: () => request('/compliance-profile'),
-    putComplianceProfile: (data) => request('/compliance-profile', jsonRequest('PUT', data)),
-    listReferrals: (query) => request(query ? `/referrals?q=${encodeURIComponent(query)}` : '/referrals'),
-    importReferrals: (data) => request('/referrals/import', jsonRequest('POST', data)),
-    dryRunRepair: () => request('/repair/dry-run', jsonRequest('POST', {})),
-    applyRepair: (confirmation) => request('/repair/apply', jsonRequest('POST', { confirmation })),
+    getStatus: () => get('/status'),
+    getSchemaStatus: () => get('/schema/status'),
+    getAuthConfig: () => get('/auth/config'),
+    listWorkflows: () => get('/workflows'),
+    getCapabilityCatalog: () => get('/catalogs/capabilities'),
+    putCapabilityCatalog: (data) => put('/catalogs/capabilities', data),
+    getActionTemplateCatalog: () => get('/catalogs/action-templates'),
+    putActionTemplateCatalog: (data) => put('/catalogs/action-templates', data),
+    getComplianceProfile: () => get('/compliance-profile'),
+    putComplianceProfile: (data) => put('/compliance-profile', data),
+    listReferrals: (query) =>
+      get(query ? `/auth/referrals?${query}` : '/auth/referrals'),
+    importReferrals: (data) => post('/auth/referrals?import=1', data),
+    dryRunRepair: () => post('/repair/dry-run', {}),
+    applyRepair: () => post('/repair/apply', { confirm: true }),
   };
-}
-
-function jsonRequest(method: string, value: unknown): RequestInit {
-  return { method, body: JSON.stringify(value) };
-}
-
-async function readJSON(response: Response): Promise<unknown> {
-  const text = await response.text();
-  if (text.trim() === '') {
-    return {};
-  }
-  return JSON.parse(text) as unknown;
-}
-
-function normalizeControlPlaneError(body: unknown, status: number): ControlPlaneError {
-  if (typeof body === 'object' && body !== null) {
-    const data = body as Record<string, unknown>;
-    if (typeof data.code === 'string' || typeof data.message === 'string' || typeof data.error === 'string') {
-      return {
-        code: typeof data.code === 'string' ? data.code : `http_${status}`,
-        message: typeof data.message === 'string' ? data.message : String(data.error ?? `HTTP ${status}`),
-        details: data.details,
-      };
-    }
-  }
-  return { code: `http_${status}`, message: `HTTP ${status}` };
 }

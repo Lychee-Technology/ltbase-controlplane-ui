@@ -40,10 +40,15 @@ export interface SessionState {
   providerName?: string;
 }
 
+export type ControlPlaneErrorKind = 'api' | 'network' | 'auth';
+
 export interface ControlPlaneError {
   code: string;
   message: string;
+  status?: number;
+  requestId?: string;
   details?: unknown;
+  kind?: ControlPlaneErrorKind;
 }
 
 export interface DraftRecord<T> {
@@ -55,3 +60,25 @@ export interface DraftRecord<T> {
 }
 
 export type WorkspaceKey = 'model' | 'workflow' | 'security' | 'health' | 'referrals';
+
+export function formatControlPlaneError(error: unknown): string {
+  if (isControlPlaneErrorShape(error)) {
+    const parts: string[] = [];
+    if (error.code) parts.push(error.code);
+    parts.push(error.message);
+    if (error.requestId) parts.push(`[${error.requestId}]`);
+    return parts.join(': ');
+  }
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  return 'Unknown error';
+}
+
+function isControlPlaneErrorShape(value: unknown): value is ControlPlaneError {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'code' in value &&
+    'message' in value
+  );
+}
