@@ -87,6 +87,30 @@ describe('createControlPlaneClient', () => {
     );
   });
 
+  it('listReferrals encodes status and code params into the query string', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ items: [] }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.listReferrals({ status: 'pending', code: 'A B' });
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/auth/referrals?status=pending&code=A+B',
+      expect.objectContaining({ headers: expect.any(Headers) }),
+    );
+  });
+
+  it('listReferrals omits the query string when no params are given', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ items: [] }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.listReferrals();
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/auth/referrals',
+      expect.objectContaining({ headers: expect.any(Headers) }),
+    );
+  });
+
   it('applyRepair sends confirm:true', async () => {
     const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: {} }), { status: 200 }));
     const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);

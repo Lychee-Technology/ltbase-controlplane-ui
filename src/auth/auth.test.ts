@@ -86,6 +86,23 @@ describe('exchangeExternalToken', () => {
     });
   });
 
+  it('throws a kind:auth ControlPlaneError when the OK response is missing access_token', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ refresh_token: 'only-refresh' }),
+    });
+
+    await expect(
+      exchangeExternalToken(stack, 'firebase', 'provider-jwt', fetchImpl as unknown as typeof fetch),
+    ).rejects.toEqual({
+      code: 'auth_error',
+      message: 'token exchange response missing access_token',
+      status: 200,
+      kind: 'auth',
+    });
+  });
+
   it('throws fallback ControlPlaneError on non-JSON auth error', async () => {
     const fetchImpl = vi.fn().mockResolvedValue({
       ok: false,

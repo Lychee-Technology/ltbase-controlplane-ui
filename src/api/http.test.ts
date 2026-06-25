@@ -68,16 +68,41 @@ describe('requestJSON', () => {
     });
   });
 
-  it('throws ControlPlaneError with kind network for fetch failures', async () => {
+  it('throws ControlPlaneError with kind network and a CORS/connectivity hint for fetch failures', async () => {
     const fetchImpl = vi.fn(async () => {
       throw new TypeError('Failed to fetch');
     });
     await expect(
       requestJSON('https://example.com', '/status', 'token-123', undefined, fetchImpl as unknown as typeof fetch),
-    ).rejects.toEqual({
+    ).rejects.toMatchObject({
       code: 'network_error',
-      message: 'Failed to fetch',
       kind: 'network',
+    });
+    await expect(
+      requestJSON('https://example.com', '/status', 'token-123', undefined, fetchImpl as unknown as typeof fetch),
+    ).rejects.toEqual(
+      expect.objectContaining({
+        message: expect.stringContaining('CORS'),
+      }),
+    );
+    await expect(
+      requestJSON('https://example.com', '/status', 'token-123', undefined, fetchImpl as unknown as typeof fetch),
+    ).rejects.toEqual(
+      expect.objectContaining({
+        message: expect.stringContaining('Failed to fetch'),
+      }),
+    );
+  });
+
+  it('throws ControlPlaneError when an OK response body is malformed JSON', async () => {
+    const fetchImpl = vi.fn(async () => new Response('<html>not json</html>', { status: 200 }));
+    await expect(
+      requestJSON('https://example.com', '/status', 'token-123', undefined, fetchImpl as unknown as typeof fetch),
+    ).rejects.toEqual({
+      code: 'invalid_response',
+      message: 'Control Plane returned a malformed JSON response.',
+      status: 200,
+      kind: 'api',
     });
   });
 

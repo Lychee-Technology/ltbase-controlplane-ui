@@ -27,11 +27,24 @@ export async function requestJSON(
     throw normalizeNetworkError(err);
   }
 
-  const body = await readJSON(response);
   if (!response.ok) {
+    const body = await readJSON(response);
     throw normalizeAPIError(body, response.status);
   }
-  return body;
+  const text = await response.text();
+  if (text.trim() === '') {
+    return {};
+  }
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    throw {
+      code: 'invalid_response',
+      message: 'Control Plane returned a malformed JSON response.',
+      status: response.status,
+      kind: 'api',
+    } satisfies ControlPlaneError;
+  }
 }
 
 function normalizeAPIError(body: unknown, status: number): ControlPlaneError {
@@ -50,13 +63,11 @@ function normalizeAPIError(body: unknown, status: number): ControlPlaneError {
 }
 
 function normalizeNetworkError(error: unknown): ControlPlaneError {
-  const message =
-    error instanceof TypeError && error.message
-      ? error.message
-      : 'Network request failed';
+  const original =
+    error instanceof TypeError && error.message ? error.message : 'Network request failed';
   return {
     code: 'network_error',
-    message,
+    message: `Could not reach the Control Plane API. It may be offline or blocking this origin (CORS). (${original})`,
     kind: 'network',
   };
 }

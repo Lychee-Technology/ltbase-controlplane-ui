@@ -12,7 +12,7 @@ export interface ControlPlaneClient {
   putActionTemplateCatalog(data: unknown): Promise<unknown>;
   getComplianceProfile(): Promise<unknown>;
   putComplianceProfile(data: unknown): Promise<unknown>;
-  listReferrals(query?: string): Promise<unknown>;
+  listReferrals(params?: { status?: string; code?: string }): Promise<unknown>;
   importReferrals(data: unknown): Promise<unknown>;
   dryRunRepair(): Promise<unknown>;
   applyRepair(): Promise<unknown>;
@@ -48,8 +48,13 @@ export function createControlPlaneClient(
     putActionTemplateCatalog: (data) => put('/catalogs/action-templates', data),
     getComplianceProfile: () => get('/compliance-profile'),
     putComplianceProfile: (data) => put('/compliance-profile', data),
-    listReferrals: (query) =>
-      get(query ? `/auth/referrals?${query}` : '/auth/referrals'),
+    listReferrals: (params) => {
+      const qs = new URLSearchParams();
+      if (params?.status) qs.set('status', params.status);
+      if (params?.code) qs.set('code', params.code);
+      const q = qs.toString();
+      return get(q ? `/auth/referrals?${q}` : '/auth/referrals');
+    },
     importReferrals: (data) => post('/auth/referrals?import=1', data),
     dryRunRepair: () => post('/repair/dry-run', {}),
     applyRepair: () => post('/repair/apply', { confirm: true }),

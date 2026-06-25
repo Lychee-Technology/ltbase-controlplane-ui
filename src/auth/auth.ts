@@ -41,28 +41,18 @@ async function parseSessionResponse(response: Response): Promise<SessionState> {
   }
   const body = (await response.json()) as Record<string, unknown>;
   if (typeof body.access_token !== 'string') {
-    throw new AuthError('token exchange response missing access_token', response.status);
+    const error: ControlPlaneError = {
+      code: 'auth_error',
+      message: 'token exchange response missing access_token',
+      status: response.status,
+      kind: 'auth',
+    };
+    throw error;
   }
   return {
     accessToken: body.access_token,
     refreshToken: typeof body.refresh_token === 'string' ? body.refresh_token : undefined,
   };
-}
-
-class AuthError extends Error {
-  readonly code: string;
-  readonly status?: number;
-  readonly requestId?: string;
-  readonly details?: unknown;
-
-  constructor(message: string, status?: number, code?: string, requestId?: string, details?: unknown) {
-    super(message);
-    this.name = 'AuthError';
-    this.code = code ?? 'auth_error';
-    this.status = status;
-    this.requestId = requestId;
-    this.details = details;
-  }
 }
 
 async function parseAuthError(response: Response): Promise<ControlPlaneError> {
