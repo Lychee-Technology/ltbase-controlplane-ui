@@ -424,4 +424,58 @@ describe('createControlPlaneClient', () => {
       expect.objectContaining({ method: 'DELETE' }),
     );
   });
+
+  it('createReferral calls POST with code, policy_id and expires_at_ms', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: { code: 'CODE1', project_id: 'proj', created_at: 1700000000000 } }), { status: 201 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.createReferral({ code: 'CODE1', policy_id: 'policy.read', expires_at_ms: 1800000000000 });
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/auth/referrals',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ code: 'CODE1', policy_id: 'policy.read', expires_at_ms: 1800000000000 }),
+      }),
+    );
+  });
+
+  it('updateReferralExpiration calls PATCH with encoded referral code', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: { code: 'CODE1', expires_at: 1700000000000 } }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.updateReferralExpiration('CODE1', { expires_at_ms: 1700000000000 });
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/auth/referrals/CODE1',
+      expect.objectContaining({
+        method: 'PATCH',
+        body: JSON.stringify({ expires_at_ms: 1700000000000 }),
+      }),
+    );
+  });
+
+  it('disableReferral calls POST with /disable suffix', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: { code: 'CODE1', disabled: true, status: 'disabled' } }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.disableReferral('CODE1');
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/auth/referrals/CODE1/disable',
+      expect.objectContaining({ method: 'POST' }),
+    );
+  });
+
+  it('deleteReferral calls DELETE with encoded referral code', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: { code: 'CODE1', status: 'deleted' } }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.deleteReferral('CODE1');
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/auth/referrals/CODE1',
+      expect.objectContaining({ method: 'DELETE' }),
+    );
+  });
 });

@@ -13,7 +13,11 @@ export interface ControlPlaneClient {
   getComplianceProfile(): Promise<unknown>;
   putComplianceProfile(data: unknown): Promise<unknown>;
   listReferrals(params?: { status?: string; code?: string }): Promise<unknown>;
+  createReferral(data: { code: string; policy_id?: string; expires_at_ms: number }): Promise<unknown>;
   importReferrals(data: unknown): Promise<unknown>;
+  updateReferralExpiration(code: string, data: { expires_at_ms: number }): Promise<unknown>;
+  disableReferral(code: string): Promise<unknown>;
+  deleteReferral(code: string): Promise<unknown>;
   dryRunRepair(): Promise<unknown>;
   applyRepair(): Promise<unknown>;
   listPolicies(): Promise<unknown>;
@@ -79,12 +83,16 @@ export function createControlPlaneClient(
     putComplianceProfile: (data) => put('/compliance-profile', data),
     listReferrals: (params) => {
       const qs = new URLSearchParams();
-      if (params?.status) qs.set('status', params.status);
-      if (params?.code) qs.set('code', params.code);
+      if (params?.status) { qs.set('status', params.status); }
+      if (params?.code) { qs.set('code', params.code); }
       const q = qs.toString();
       return get(q ? `/auth/referrals?${q}` : '/auth/referrals');
     },
+    createReferral: (data) => post('/auth/referrals', data),
     importReferrals: (data) => post('/auth/referrals?import=1', data),
+    updateReferralExpiration: (code, data) => patch(`/auth/referrals/${encodeURIComponent(code)}`, data),
+    disableReferral: (code) => post(`/auth/referrals/${encodeURIComponent(code)}/disable`, {}),
+    deleteReferral: (code) => del(`/auth/referrals/${encodeURIComponent(code)}`),
     dryRunRepair: () => post('/repair/dry-run', {}),
     applyRepair: () => post('/repair/apply', { confirm: true }),
     listPolicies: () => get('/auth/policies'),
