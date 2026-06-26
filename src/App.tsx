@@ -1,4 +1,4 @@
-import { Activity, Database, KeyRound, UsersRound } from 'lucide-react';
+import { Activity, Database, KeyRound, LayoutDashboard, UsersRound } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { loadRuntimeConfig } from './config';
 import { createControlPlaneClient } from './api/controlPlaneClient';
@@ -14,6 +14,7 @@ import {
   saveSession,
 } from './auth/session';
 import { saveDraft } from './drafts/drafts';
+import { OverviewDashboard } from './overview/OverviewDashboard';
 import { LocalSchemaEditor } from './schema/LocalSchemaEditor';
 import { SchemaWorkspace } from './schemas/SchemaWorkspace';
 import { WorkflowWorkspace } from './workflows/WorkflowWorkspace';
@@ -28,6 +29,11 @@ import { formatControlPlaneError } from './types';
 import './styles.css';
 
 const workspaces: Array<{ key: WorkspaceKey; label: string; icon: ReactNode }> = [
+  { key: 'overview', label: 'Overview', icon: <LayoutDashboard size={18} /> },
+  { key: 'users', label: 'Users', icon: <UsersRound size={18} /> },
+  { key: 'roles', label: 'Roles', icon: <KeyRound size={18} /> },
+  { key: 'policies', label: 'Policies', icon: <Database size={18} /> },
+  { key: 'organization', label: 'Organization', icon: <Database size={18} /> },
   { key: 'model', label: 'Model & Capabilities', icon: <Database size={18} /> },
   { key: 'workflow', label: 'Workflow Authoring', icon: <Database size={18} /> },
   { key: 'security', label: 'Security & Compliance', icon: <KeyRound size={18} /> },
@@ -40,7 +46,7 @@ const refreshingRestoredSessions = new Map<string, string>();
 export default function App() {
   const [config, setConfig] = useState<RuntimeConfig | null>(null);
   const [selectedStackKey, setSelectedStackKey] = useState('');
-  const [workspace, setWorkspace] = useState<WorkspaceKey>('model');
+  const [workspace, setWorkspace] = useState<WorkspaceKey>('overview');
   const [session, setSession] = useState<SessionState | null>(null);
   const [status, setStatus] = useState<string>('Loading runtime config...');
   const selectedStackKeyRef = useRef(selectedStackKey);
@@ -326,6 +332,11 @@ export default function App() {
         </header>
 
         <p className="status">{status}</p>
+        {workspace === 'overview' && <OverviewDashboard client={client} onNavigate={setWorkspace} />}
+        {workspace === 'users' && <Placeholder title="Users Management" description="#27 — Manage users, identity providers, OU membership, and reporting lines." />}
+        {workspace === 'roles' && <Placeholder title="Roles Management" description="#28 — Manage roles, slugs, external keys, and parent-role hierarchy." />}
+        {workspace === 'policies' && <Placeholder title="Policies Management" description="#29 — Manage policy documents, attachments, and binding policy rules." />}
+        {workspace === 'organization' && <Placeholder title="Organization Management" description="#32 — Manage the OU tree, OU policy attachments, and user placement." />}
         {workspace === 'model' && <ModelWorkspace clientReady={client !== null} />}
         {workspace === 'workflow' && <WorkflowWorkspace clientReady={client !== null} />}
         {workspace === 'security' && <Placeholder title="Security policy editor" description="Roles, policies, bindings, capability assignments, and compliance profile will use the shared draft/apply model." />}

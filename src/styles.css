@@ -203,6 +203,124 @@ select,
   color: #627287;
 }
 
+.dashboard {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.dashboard .panel {
+  grid-column: span 2;
+}
+
+.dashboard .panel-half {
+  grid-column: span 1;
+}
+
+.dashboard-empty,
+.dashboard-error {
+  max-width: 640px;
+}
+
+.dashboard-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.metric-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 18px 12px;
+  border: 1px solid #dfe5ec;
+  border-radius: 8px;
+  background: #f9fafb;
+  color: #17202a;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.15s;
+}
+
+.metric-card:hover {
+  border-color: #1f6feb;
+  background: #eff6ff;
+}
+
+.metric-warn:hover {
+  border-color: #b42318;
+  background: #fef2f2;
+}
+
+.metric-count {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.metric-label {
+  color: #627287;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.kv-list {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px 16px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.kv-list dt {
+  color: #627287;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.kv-list dd {
+  margin: 0;
+  font-size: 14px;
+  word-break: break-word;
+}
+
+.kv-mono {
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 13px;
+}
+
+.schema-compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.schema-column {
+  border: 1px solid #dfe5ec;
+  border-radius: 8px;
+  background: #f9fafb;
+  padding: 14px;
+}
+
+.schema-label {
+  margin: 0 0 6px;
+  color: #627287;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.schema-version {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
 @media (max-width: 860px) {
   .app-shell,
   .grid {
@@ -216,5 +334,17 @@ select,
   .topbar {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .dashboard {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard .panel-half {
+    grid-column: span 1;
+  }
+
+  .dashboard-metrics {
+    grid-template-columns: repeat(2, 1fr);
   }
 }

@@ -42,6 +42,15 @@ vi.mock('./drafts/drafts', () => ({
   saveDraft: vi.fn(),
 }));
 
+vi.mock('./overview/OverviewDashboard', () => ({
+  OverviewDashboard: ({ client, onNavigate }: { client: unknown; onNavigate: (key: string) => void }) => (
+    <div>
+      <span>Dashboard ready: {String(client !== null)}</span>
+      <button type="button" onClick={() => onNavigate('users')}>Go to Users</button>
+    </div>
+  ),
+}));
+
 vi.mock('./schema/LocalSchemaEditor', () => ({
   LocalSchemaEditor: () => <div>Local Schema Editor</div>,
 }));
@@ -423,7 +432,7 @@ describe('App', () => {
 
     expect(screen.getByRole('button', { name: 'Login with Partner Firebase' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Logout' })).not.toBeInTheDocument();
-    expect(screen.getByText('Schema workspace ready: false')).toBeInTheDocument();
+    expect(screen.getByText('Dashboard ready: false')).toBeInTheDocument();
   });
 
   it('refreshes a restored session only once across StrictMode remount for the same stored refresh token', async () => {
