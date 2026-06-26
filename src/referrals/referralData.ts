@@ -12,16 +12,6 @@ export interface AuthReferral {
   status: ReferralStatus;
 }
 
-function pluckData(payload: unknown): Record<string, unknown> {
-  if (payload && typeof payload === 'object' && 'data' in payload) {
-    const data = (payload as Record<string, unknown>).data;
-    if (data && typeof data === 'object') {
-      return data as Record<string, unknown>;
-    }
-  }
-  return {};
-}
-
 export function parseReferral(payload: unknown): AuthReferral {
   const data = payload as Record<string, unknown>;
   return {
@@ -55,11 +45,6 @@ export function parseReferralList(payload: unknown): ReferralListResult {
   };
 }
 
-export function parseReferralDetail(payload: unknown): AuthReferral {
-  const data = pluckData(payload);
-  return parseReferral(data);
-}
-
 export function datetimeLocalToMillis(value: string): number {
   const trimmed = value.trim();
   if (!trimmed) {
@@ -80,7 +65,8 @@ export function millisToDatetimeLocal(ms: number): string {
   if (isNaN(d.getTime())) {
     return '';
   }
-  return d.toISOString().slice(0, 16);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 export interface BatchImportItem {

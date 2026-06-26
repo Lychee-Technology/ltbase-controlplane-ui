@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   parseReferral,
   parseReferralList,
-  parseReferralDetail,
   datetimeLocalToMillis,
   millisToDatetimeLocal,
   validateBatchImportJSON,
@@ -84,18 +83,6 @@ describe('parseReferralList', () => {
   });
 });
 
-describe('parseReferralDetail', () => {
-  it('unwraps data envelope', () => {
-    const result = parseReferralDetail({
-      data: { code: 'CODE1', project_id: 'p1', status: 'disabled', disabled: true },
-    });
-
-    expect(result.code).toBe('CODE1');
-    expect(result.status).toBe('disabled');
-    expect(result.disabled).toBe(true);
-  });
-});
-
 describe('datetimeLocalToMillis', () => {
   it('converts a valid datetime-local string to milliseconds', () => {
     const ms = datetimeLocalToMillis('2026-06-26T12:00');
@@ -118,6 +105,14 @@ describe('millisToDatetimeLocal', () => {
     const d = new Date('2026-06-26T12:00:00Z').getTime();
     const result = millisToDatetimeLocal(d);
     expect(result).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/);
+  });
+
+  it('round-trips through datetimeLocalToMillis in local time', () => {
+    // The <input type="datetime-local"> value is local time; formatting and
+    // parsing must agree so editing an expiration does not shift it by the
+    // browser's UTC offset. Truncate to the minute the format preserves.
+    const ms = Math.floor(new Date('2026-06-26T12:34:56.789Z').getTime() / 60000) * 60000;
+    expect(datetimeLocalToMillis(millisToDatetimeLocal(ms))).toBe(ms);
   });
 
   it('returns empty string for 0 or negative', () => {

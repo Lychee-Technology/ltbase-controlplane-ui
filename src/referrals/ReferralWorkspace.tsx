@@ -1,18 +1,17 @@
 import { Ban, Download, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import type { ControlPlaneClient } from '../api/controlPlaneClient';
-import { formatControlPlaneError } from '../types';
+import { formatControlPlaneError, truncateUUID } from '../types';
 import { parsePolicyList } from '../policies/policyData';
 import type { AuthPolicy } from '../policies/policyData';
-import './referrals.css';
 import {
   datetimeLocalToMillis,
   millisToDatetimeLocal,
   parseReferralList,
-  parseReferralDetail,
   validateBatchImportJSON,
 } from './referralData';
 import type { AuthReferral, ReferralStatus } from './referralData';
+import './referrals.css';
 
 function isReferralInUseError(error: unknown): boolean {
   return (
@@ -111,20 +110,23 @@ export function ReferralWorkspace({ client }: { client: ControlPlaneClient | nul
     void loadList();
   }, [loadList]);
 
-  useEffect(() => {
+  const loadPolicies = useCallback(async () => {
     if (!client) {
+      setPolicies({ kind: 'idle' });
       return;
     }
     setPolicies({ kind: 'loading' });
-    client.listPolicies()
-      .then((payload) => {
-        const policies = parsePolicyList(payload);
-        setPolicies({ kind: 'ready', policies: policies });
-      })
-      .catch((error: unknown) => {
-        setPolicies({ kind: 'error', message: formatControlPlaneError(error) });
-      });
+    try {
+      const payload = await client.listPolicies();
+      setPolicies({ kind: 'ready', policies: parsePolicyList(payload) });
+    } catch (error: unknown) {
+      setPolicies({ kind: 'error', message: formatControlPlaneError(error) });
+    }
   }, [client]);
+
+  useEffect(() => {
+    void loadPolicies();
+  }, [loadPolicies]);
 
   async function loadDetail(code: string) {
     if (!client) {
@@ -433,7 +435,7 @@ export function ReferralWorkspace({ client }: { client: ControlPlaneClient | nul
                 >
                   <td className="kv-mono">{referral.code || '—'}</td>
                   <td><span className={statusBadgeClass(referral.status)}>{referral.status}</span></td>
-                  <td className="kv-mono">{referral.policyId || '—'}</td>
+                  <td className="kv-mono">{referral.policyId ? truncateUUID(referral.policyId, 8) : '—'}</td>
                   <td>{formatTimestamp(referral.expiresAt)}</td>
                 </tr>
               ))}
@@ -588,7 +590,7 @@ function ReferralDetailPane({
         <dt>Status</dt>
         <dd><span className={statusBadgeClass(referral.status)}>{referral.status}</span></dd>
         <dt>Policy ID</dt>
-        <dd className="kv-mono">{referral.policyId || '—'}</dd>
+        <dd className="kv-mono">{referral.policyId ? truncateUUID(referral.policyId) : '—'}</dd>
         <dt>Used At</dt>
         <dd>{formatTimestamp(referral.usedAt)}</dd>
         <dt>Expires At</dt>
