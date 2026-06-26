@@ -15,6 +15,12 @@ export interface RoleFormValue {
   parentRoleIds: string[];
 }
 
+export interface PolicyOption {
+  policyId: string;
+  name: string;
+  slug: string;
+}
+
 export interface RolePolicyAttachment {
   principalType: string;
   principalId: string;
@@ -31,6 +37,10 @@ export interface RolePolicyAttachment {
   };
 }
 
+// Role endpoints return different envelopes: list/policy-attachment responses
+// carry a top-level `{ items }`, while detail/create/update nest the payload
+// under `data.role`. `pluckData` unwraps the `data` wrapper (mirroring
+// policies/policyData.ts); the list parser reads the top level directly.
 function pluckData(payload: unknown): Record<string, unknown> {
   if (payload && typeof payload === 'object' && 'data' in payload) {
     const data = (payload as Record<string, unknown>).data;
@@ -90,17 +100,23 @@ export function parseRolePolicyAttachments(payload: unknown): RolePolicyAttachme
   });
 }
 
+export function parsePolicyOptions(payload: unknown): PolicyOption[] {
+  const data = payload as Record<string, unknown>;
+  const items = Array.isArray(data?.items) ? data.items : [];
+  return items.map((item: unknown) => {
+    const p = item as Record<string, unknown>;
+    return {
+      policyId: String(p.policy_id ?? ''),
+      name: String(p.name ?? ''),
+      slug: String(p.slug ?? ''),
+    };
+  });
+}
+
 export function buildParentRoleIndex(roles: AuthRole[]): Map<string, string> {
   const index = new Map<string, string>();
   for (const role of roles) {
     index.set(role.roleId, role.name || role.slug || role.roleId);
   }
   return index;
-}
-
-export function truncateUUID(id: string): string {
-  if (id.length <= 12) {
-    return id;
-  }
-  return id.slice(0, 12) + '…';
 }

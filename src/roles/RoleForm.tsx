@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { AuthRole, RoleFormValue } from './roleData';
-import { truncateUUID } from './roleData';
+import { truncateUUID } from '../types';
 
 interface Props {
   mode: 'create' | 'edit';

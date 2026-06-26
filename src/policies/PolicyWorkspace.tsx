@@ -1,7 +1,7 @@
 import { Plus, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import type { ControlPlaneClient } from '../api/controlPlaneClient';
-import { formatControlPlaneError } from '../types';
+import { formatControlPlaneError, truncateUUID } from '../types';
 import { PolicyDocumentPreview } from './PolicyDocumentPreview';
 import { PolicyForm } from './PolicyForm';
 import {
@@ -262,7 +262,7 @@ export function PolicyWorkspace({ client }: { client: ControlPlaneClient | null 
                   className={page.kind === 'detail' && page.policyId === policy.policyId ? 'row-selected' : ''}
                   onClick={() => selectPolicy(policy.policyId)}
                 >
-                  <td className="kv-mono">{truncateUUID(policy.policyId)}</td>
+                  <td className="kv-mono">{truncateUUID(policy.policyId, 8)}</td>
                   <td>{policy.name || '—'}</td>
                   <td className="kv-mono">{policy.slug || '—'}</td>
                   <td className="kv-mono">{policy.externalKey || '—'}</td>
@@ -416,9 +416,4 @@ function ReferenceList({ label, items }: { label: string; items: { id: string; l
       </ul>
     </div>
   );
-}
-
-function truncateUUID(uuid: string): string {
-  if (uuid.length <= 8) return uuid;
-  return `${uuid.slice(0, 8)}…`;
 }

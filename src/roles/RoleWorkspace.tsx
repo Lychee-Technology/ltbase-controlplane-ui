@@ -1,16 +1,16 @@
 import { Plus, Search, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import type { ControlPlaneClient } from '../api/controlPlaneClient';
-import { formatControlPlaneError } from '../types';
+import { formatControlPlaneError, truncateUUID } from '../types';
 import { RoleForm } from './RoleForm';
 import {
   parseRoleList,
   parseRoleDetail,
   parseRolePolicyAttachments,
+  parsePolicyOptions,
   buildParentRoleIndex,
-  truncateUUID,
 } from './roleData';
-import type { AuthRole, RoleFormValue, RolePolicyAttachment } from './roleData';
+import type { AuthRole, PolicyOption, RoleFormValue, RolePolicyAttachment } from './roleData';
 import './roles.css';
 
 function isRoleInUseError(error: unknown): boolean {
@@ -61,7 +61,7 @@ export function RoleWorkspace({ client }: { client: ControlPlaneClient | null })
 
   const [policyTab, setPolicyTab] = useState(false);
   const [policies, setPolicies] = useState<PolicyLoadState>({ kind: 'idle' });
-  const [allPolicies, setAllPolicies] = useState<Array<{ policyId: string; name: string; slug: string }>>([]);
+  const [allPolicies, setAllPolicies] = useState<PolicyOption[]>([]);
   const [attaching, setAttaching] = useState(false);
   const [attachError, setAttachError] = useState('');
 
@@ -112,17 +112,7 @@ export function RoleWorkspace({ client }: { client: ControlPlaneClient | null })
       const attachments = parseRolePolicyAttachments(rolePoliciesPayload);
       setPolicies({ kind: 'ready', attachments });
 
-      const allData = allPoliciesPayload as Record<string, unknown>;
-      const items = Array.isArray(allData?.items) ? allData.items : [];
-      const mapped = items.map((item: unknown) => {
-        const p = item as Record<string, unknown>;
-        return {
-          policyId: String(p.policy_id ?? ''),
-          name: String(p.name ?? ''),
-          slug: String(p.slug ?? ''),
-        };
-      });
-      setAllPolicies(mapped);
+      setAllPolicies(parsePolicyOptions(allPoliciesPayload));
     } catch (error: unknown) {
       setPolicies({ kind: 'error', message: formatControlPlaneError(error) });
     }
@@ -486,7 +476,7 @@ function RoleDetailPane({
   policyTab: boolean;
   onTogglePolicyTab: (roleId: string) => void;
   policies: PolicyLoadState;
-  allPolicies: Array<{ policyId: string; name: string; slug: string }>;
+  allPolicies: PolicyOption[];
   attaching: boolean;
   attachError: string;
   onAttachPolicy: (policyRef: string) => void;
@@ -586,6 +576,8 @@ function RoleDetailPane({
           policies={policies}
           allPolicies={allPolicies}
           attachedPolicyIds={
+            // A policy may be attached by either its durable id or its slug, so we
+            // collect both forms to exclude already-attached policies from the picker.
             policies.kind === 'ready'
               ? policies.attachments.map((a) => a.policyId).concat(
                   policies.attachments.map((a) => a.policy.slug).filter(Boolean),
@@ -612,7 +604,7 @@ function RolePolicyTab({
   onDetach,
 }: {
   policies: PolicyLoadState;
-  allPolicies: Array<{ policyId: string; name: string; slug: string }>;
+  allPolicies: PolicyOption[];
   attachedPolicyIds: string[];
   attaching: boolean;
   attachError: string;

@@ -4,8 +4,8 @@ import {
   parseRoleDetail,
   parseRole,
   parseRolePolicyAttachments,
+  parsePolicyOptions,
   buildParentRoleIndex,
-  truncateUUID,
 } from './roleData';
 import type { AuthRole } from './roleData';
 
@@ -178,18 +178,29 @@ describe('buildParentRoleIndex', () => {
   });
 });
 
-describe('truncateUUID', () => {
-  it('truncates long strings to 12 chars with ellipsis', () => {
-    const result = truncateUUID('0192e0a1-7c3d-7b2a-9f10-aa01bb02cc03');
-    expect(result).toBe('0192e0a1-7c3…');
+describe('parsePolicyOptions', () => {
+  it('maps items to id/name/slug options', () => {
+    const payload = {
+      items: [
+        { policy_id: 'pol-1', name: 'Reader', slug: 'policy.reader' },
+        { policy_id: 'pol-2', name: 'Writer', slug: 'policy.writer' },
+      ],
+    };
+    expect(parsePolicyOptions(payload)).toEqual([
+      { policyId: 'pol-1', name: 'Reader', slug: 'policy.reader' },
+      { policyId: 'pol-2', name: 'Writer', slug: 'policy.writer' },
+    ]);
   });
 
-  it('returns short strings unchanged', () => {
-    expect(truncateUUID('short')).toBe('short');
+  it('returns empty array when items is missing or not an array', () => {
+    expect(parsePolicyOptions({})).toEqual([]);
+    expect(parsePolicyOptions({ items: null })).toEqual([]);
+    expect(parsePolicyOptions(undefined)).toEqual([]);
   });
 
-  it('returns 12-char string unchanged', () => {
-    const id = '123456789012';
-    expect(truncateUUID(id)).toBe('123456789012');
+  it('coerces missing fields to empty strings', () => {
+    expect(parsePolicyOptions({ items: [{}] })).toEqual([
+      { policyId: '', name: '', slug: '' },
+    ]);
   });
 });
