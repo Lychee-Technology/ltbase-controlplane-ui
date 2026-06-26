@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'react';
-import { validatePolicyDocumentJSON, defaultPolicyDocumentJSON, formatPolicyDocument } from './policyData';
+import {
+  validatePolicyDocumentJSON,
+  validatePolicyDocumentShape,
+  defaultPolicyDocumentJSON,
+  formatPolicyDocument,
+} from './policyData';
 import type { AuthPolicy, PolicyFormValue } from './policyData';
 
 interface Props {
@@ -10,13 +15,14 @@ interface Props {
   onCancel: () => void;
 }
 
-function PolicyForm({ mode, policy, saving, onSave, onCancel }: Props) {
+export function PolicyForm({ mode, policy, saving, onSave, onCancel }: Props) {
   const [name, setName] = useState(policy?.name ?? '');
   const [description, setDescription] = useState(policy?.description ?? '');
   const [documentJSON, setDocumentJSON] = useState(() =>
     mode === 'edit' && policy ? formatPolicyDocument(policy.document) : defaultPolicyDocumentJSON(),
   );
   const [docError, setDocError] = useState('');
+  const [docWarnings, setDocWarnings] = useState<string[]>([]);
 
   useEffect(() => {
     if (mode === 'edit' && policy) {
@@ -36,8 +42,10 @@ function PolicyForm({ mode, policy, saving, onSave, onCancel }: Props) {
     const validation = validatePolicyDocumentJSON(value);
     if (!validation.valid) {
       setDocError(validation.message);
+      setDocWarnings([]);
     } else {
       setDocError('');
+      setDocWarnings(validatePolicyDocumentShape(validation.parsed));
     }
   }
 
@@ -50,6 +58,8 @@ function PolicyForm({ mode, policy, saving, onSave, onCancel }: Props) {
     if (!name.trim()) {
       return;
     }
+    // Statement-shape issues are advisory only — they do not block submission.
+    setDocWarnings(validatePolicyDocumentShape(validation.parsed));
     onSave({ name: name.trim(), description: description.trim(), policyDocument: validation.parsed });
   }
 
@@ -110,11 +120,19 @@ function PolicyForm({ mode, policy, saving, onSave, onCancel }: Props) {
             aria-label="Policy document JSON"
             disabled={saving}
           />
-          {docError && <p className="error" style={{ marginTop: 4 }}>Invalid JSON: {docError}</p>}
+          {docError && <p className="error form-hint">Invalid JSON: {docError}</p>}
+          {!docError && docWarnings.length > 0 && (
+            <div className="warning form-hint">
+              <strong>Statement warnings (rfc §6.2) — you can still save:</strong>
+              <ul className="warning-list">
+                {docWarnings.map((warning) => (
+                  <li key={warning}>{warning}</li>
+                ))}
+              </ul>
+            </div>
+          )}
         </label>
       </div>
     </section>
   );
 }
-
-export { PolicyForm };

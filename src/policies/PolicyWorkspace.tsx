@@ -11,6 +11,18 @@ import {
 } from './policyData';
 import type { AuthPolicy, PolicyFormValue, PolicyReferenceSummary } from './policyData';
 
+// The Control Plane signals a delete blocked by attachments with a structured
+// `policy_in_use` error code (see api/http.ts). Inspect the code rather than
+// string-matching the human-readable message.
+function isPolicyInUseError(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error as { code: unknown }).code === 'policy_in_use'
+  );
+}
+
 type Page =
   | { kind: 'list' }
   | { kind: 'create' }
@@ -29,7 +41,7 @@ type DetailLoadState =
   | { kind: 'error'; message: string }
   | { kind: 'ready'; policy: AuthPolicy; references: PolicyReferenceSummary };
 
-function PolicyWorkspace({ client }: { client: ControlPlaneClient | null }) {
+export function PolicyWorkspace({ client }: { client: ControlPlaneClient | null }) {
   const [page, setPage] = useState<Page>({ kind: 'list' });
   const [list, setList] = useState<LoadState>({ kind: 'idle' });
   const [detail, setDetail] = useState<DetailLoadState>({ kind: 'idle' });
@@ -123,6 +135,11 @@ function PolicyWorkspace({ client }: { client: ControlPlaneClient | null }) {
     }
   }
 
+  function handleDeleteConfirm(policyId: string) {
+    setDeleteConfirmation(policyId);
+    setDeleteError('');
+  }
+
   async function handleDelete(policyId: string) {
     if (!client) return;
     setDeleting(true);
@@ -134,8 +151,10 @@ function PolicyWorkspace({ client }: { client: ControlPlaneClient | null }) {
       await loadList();
     } catch (error: unknown) {
       const message = formatControlPlaneError(error);
-      if (message.toLowerCase().includes('policy_in_use') || message.toLowerCase().includes('in use')) {
-        setDeleteError(`Cannot delete: policy is still in use. ${message}`);
+      if (isPolicyInUseError(error)) {
+        setDeleteError(
+          `Cannot delete: this policy is still attached to users, roles, OUs, or referrals. Detach all references first. (${message})`,
+        );
       } else {
         setDeleteError(message);
       }
@@ -183,7 +202,7 @@ function PolicyWorkspace({ client }: { client: ControlPlaneClient | null }) {
           </div>
         </div>
         <p className="error">{list.message}</p>
-        <button className="button ghost" type="button" onClick={() => void loadList()} style={{ marginTop: 12 }}>
+        <button className="button ghost spaced-above" type="button" onClick={() => void loadList()}>
           Retry
         </button>
       </section>
@@ -242,7 +261,6 @@ function PolicyWorkspace({ client }: { client: ControlPlaneClient | null }) {
                   key={policy.policyId}
                   className={page.kind === 'detail' && page.policyId === policy.policyId ? 'row-selected' : ''}
                   onClick={() => selectPolicy(policy.policyId)}
-                  style={{ cursor: 'pointer' }}
                 >
                   <td className="kv-mono">{truncateUUID(policy.policyId)}</td>
                   <td>{policy.name || '—'}</td>
@@ -255,14 +273,9 @@ function PolicyWorkspace({ client }: { client: ControlPlaneClient | null }) {
         )}
       </section>
 
-      {page.kind === 'detail' && <PolicyDetailPane state={detail} onEdit={(id) => setPage({ kind: 'edit', policyId: id })} onDelete={handleDeleteConfirm} deleteConfirmation={deleteConfirmation} deleting={deleting} deleteError={deleteError} onDeleteConfirm={setDeleteConfirmation} onDeleteCancel={() => { setDeleteConfirmation(null); setDeleteError(''); }} />}
+      {page.kind === 'detail' && <PolicyDetailPane state={detail} onEdit={(id) => setPage({ kind: 'edit', policyId: id })} onDelete={(id) => void handleDelete(id)} deleteConfirmation={deleteConfirmation} deleting={deleting} deleteError={deleteError} onDeleteConfirm={handleDeleteConfirm} onDeleteCancel={() => { setDeleteConfirmation(null); setDeleteError(''); }} />}
     </div>
   );
-
-  function handleDeleteConfirm(policyId: string) {
-    setDeleteConfirmation(policyId);
-    setDeleteError('');
-  }
 }
 
 function PolicyDetailPane({
@@ -334,8 +347,6 @@ function PolicyDetailPane({
               className="button ghost"
               type="button"
               onClick={() => onDeleteConfirm(policy.policyId)}
-              disabled={hasReferences}
-              title={hasReferences ? 'Detach references before deleting this policy' : undefined}
             >
               <Trash2 size={16} /> Delete
             </button>
@@ -343,7 +354,7 @@ function PolicyDetailPane({
         </div>
       </div>
 
-      {deleteError && <p className="error" style={{ marginBottom: 12 }}>{deleteError}</p>}
+      {deleteError && <p className="error spaced-below">{deleteError}</p>}
 
       <dl className="kv-list">
         <dt>Policy ID</dt>
@@ -365,7 +376,7 @@ function PolicyDetailPane({
       </div>
 
       <div className="panel-section">
-        <div className="panel-heading" style={{ marginBottom: 12 }}>
+        <div className="panel-heading spaced-below">
           <div>
             <p className="eyebrow">References</p>
             <h3>Attached To</h3>
@@ -376,7 +387,7 @@ function PolicyDetailPane({
         ) : (
           <>
             {hasReferences && (
-              <p className="warning" style={{ marginBottom: 12 }}>
+              <p className="warning spaced-below">
                 Detach all references before deleting this policy.
               </p>
             )}
@@ -394,8 +405,8 @@ function PolicyDetailPane({
 function ReferenceList({ label, items }: { label: string; items: { id: string; label: string }[] }) {
   if (items.length === 0) return null;
   return (
-    <div style={{ marginBottom: 8 }}>
-      <strong style={{ fontSize: 13 }}>{label}</strong>
+    <div className="reference-group">
+      <strong className="reference-group-label">{label}</strong>
       <ul className="reference-list">
         {items.map((item) => (
           <li key={item.id} className="kv-mono">
@@ -409,7 +420,5 @@ function ReferenceList({ label, items }: { label: string; items: { id: string; l
 
 function truncateUUID(uuid: string): string {
   if (uuid.length <= 8) return uuid;
-  return `${uuid.slice(0, 8)}...`;
+  return `${uuid.slice(0, 8)}…`;
 }
-
-export { PolicyWorkspace };

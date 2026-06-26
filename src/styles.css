@@ -381,6 +381,10 @@ select,
   font-size: 14px;
 }
 
+.policy-table tbody tr {
+  cursor: pointer;
+}
+
 .policy-table tr:hover td {
   background: #f6f9fc;
 }
@@ -522,6 +526,36 @@ select,
   padding: 3px 0;
   font-size: 13px;
   color: #627287;
+}
+
+.spaced-above {
+  margin-top: 12px;
+}
+
+.spaced-below {
+  margin-bottom: 12px;
+}
+
+.reference-group {
+  margin-bottom: 8px;
+}
+
+.reference-group-label {
+  font-size: 13px;
+}
+
+.statement-scope {
+  margin-top: 4px;
+}
+
+.form-hint {
+  margin-top: 4px;
+}
+
+.warning-list {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  font-size: 13px;
 }
 
 @media (max-width: 860px) {

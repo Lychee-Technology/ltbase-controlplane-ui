@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { formatPolicyDocument } from './policyData';
 
-function PolicyDocumentPreview({ document }: { document: unknown }) {
+export function PolicyDocumentPreview({ document }: { document: unknown }) {
   const [showRaw, setShowRaw] = useState(false);
   const formatted = formatPolicyDocument(document);
 
@@ -13,7 +13,7 @@ function PolicyDocumentPreview({ document }: { document: unknown }) {
 
   return (
     <div>
-      <div className="panel-heading" style={{ marginBottom: 12 }}>
+      <div className="panel-heading spaced-below">
         <div>
           <p className="eyebrow">Document</p>
           <h3>Policy Document</h3>
@@ -68,7 +68,7 @@ function renderSelector(selector: unknown) {
   if (parts.length === 0) {
     return null;
   }
-  return <p className="muted" style={{ marginTop: 4 }}>Scope: {parts.join(', ')}</p>;
+  return <p className="muted statement-scope">Scope: {parts.join(', ')}</p>;
 }
 
 function extractStatements(document: unknown): Record<string, unknown>[] {
@@ -81,5 +81,3 @@ function extractStatements(document: unknown): Record<string, unknown>[] {
   }
   return [];
 }
-
-export { PolicyDocumentPreview };

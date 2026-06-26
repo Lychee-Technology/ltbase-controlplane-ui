@@ -199,4 +199,31 @@ describe('PolicyWorkspace', () => {
       expect(mocks.getPolicy).toHaveBeenCalledWith('0192e0a1-7c3d-7b2a-9f10-aa01bb02cc03');
     });
   });
+
+  it('allows attempting delete on a referenced policy and surfaces policy_in_use', async () => {
+    mocks.listPolicies.mockResolvedValue(samplePolicies);
+    mocks.getAuthConfig.mockResolvedValue(sampleAuthConfig);
+    // Sales Read (cc03) is referenced by user-1 and referral CODE-A in sampleAuthConfig.
+    mocks.getPolicy.mockResolvedValue({ data: { policy: samplePolicies.items[0] } });
+    mocks.deletePolicy.mockRejectedValue({ code: 'policy_in_use', message: 'policy is referenced' });
+
+    render(<PolicyWorkspace client={makeClient()} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Sales Read')).toBeInTheDocument();
+    });
+    await userEvent.click(screen.getByText('Sales Read'));
+
+    // Delete is clickable even though the policy has references (no client-side block).
+    const deleteButton = await screen.findByRole('button', { name: /Delete/ });
+    expect(deleteButton).toBeEnabled();
+
+    await userEvent.click(deleteButton);
+    await userEvent.click(screen.getByRole('button', { name: 'Confirm Delete' }));
+
+    await waitFor(() => {
+      expect(mocks.deletePolicy).toHaveBeenCalledWith('0192e0a1-7c3d-7b2a-9f10-aa01bb02cc03');
+    });
+    expect(await screen.findByText(/still attached/i)).toBeInTheDocument();
+  });
 });

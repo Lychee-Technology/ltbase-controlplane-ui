@@ -4,6 +4,7 @@ import {
   parsePolicyDetail,
   parsePolicy,
   validatePolicyDocumentJSON,
+  validatePolicyDocumentShape,
   formatPolicyDocument,
   defaultPolicyDocumentJSON,
   derivePolicyReferences,
@@ -139,6 +140,91 @@ describe('validatePolicyDocumentJSON', () => {
   it('rejects malformed JSON', () => {
     const result = validatePolicyDocumentJSON('{ bad }');
     expect(result.valid).toBe(false);
+  });
+});
+
+describe('validatePolicyDocumentShape', () => {
+  it('returns no warnings for a well-formed document', () => {
+    const doc = {
+      statements: [
+        { effect: 'allow', ops: ['read'], schema: 'lead', selector: { filter: { owner: 'eq:1' } } },
+        { effect: 'mask', ops: ['read'], schema: 'lead', outcome: { attrs: ['ssn'], action: 'mask' } },
+      ],
+    };
+    expect(validatePolicyDocumentShape(doc)).toEqual([]);
+  });
+
+  it('accepts the empty default document', () => {
+    expect(validatePolicyDocumentShape({ statements: [] })).toEqual([]);
+  });
+
+  it('flags a document without a statements array', () => {
+    expect(validatePolicyDocumentShape({ foo: 1 })).toHaveLength(1);
+    expect(validatePolicyDocumentShape({ foo: 1 })[0]).toContain('statements');
+  });
+
+  it('flags a missing effect', () => {
+    const warnings = validatePolicyDocumentShape({
+      statements: [{ ops: ['read'], schema: 'lead', selector: { filter: {} } }],
+    });
+    expect(warnings.some((w) => w.includes('effect'))).toBe(true);
+  });
+
+  it('flags an invalid effect enum', () => {
+    const warnings = validatePolicyDocumentShape({
+      statements: [{ effect: 'grant', ops: ['read'], schema: 'lead', selector: { filter: {} } }],
+    });
+    expect(warnings.some((w) => w.includes('effect'))).toBe(true);
+  });
+
+  it('flags missing or empty ops', () => {
+    const warnings = validatePolicyDocumentShape({
+      statements: [{ effect: 'allow', ops: [], schema: 'lead', selector: { filter: {} } }],
+    });
+    expect(warnings.some((w) => w.includes('ops'))).toBe(true);
+  });
+
+  it('flags ops outside the allowed set', () => {
+    const warnings = validatePolicyDocumentShape({
+      statements: [{ effect: 'allow', ops: ['frobnicate'], schema: 'lead', selector: { filter: {} } }],
+    });
+    expect(warnings.some((w) => w.includes('ops'))).toBe(true);
+  });
+
+  it('flags a missing schema', () => {
+    const warnings = validatePolicyDocumentShape({
+      statements: [{ effect: 'allow', ops: ['read'], selector: { filter: {} } }],
+    });
+    expect(warnings.some((w) => w.includes('schema'))).toBe(true);
+  });
+
+  it('flags allow/deny without a selector', () => {
+    const warnings = validatePolicyDocumentShape({
+      statements: [{ effect: 'allow', ops: ['read'], schema: 'lead' }],
+    });
+    expect(warnings.some((w) => w.includes('selector'))).toBe(true);
+  });
+
+  it('flags mask without a valid outcome', () => {
+    const warnings = validatePolicyDocumentShape({
+      statements: [{ effect: 'mask', ops: ['read'], schema: 'lead' }],
+    });
+    expect(warnings.some((w) => w.includes('outcome'))).toBe(true);
+  });
+
+  it('flags a non-object document', () => {
+    expect(validatePolicyDocumentShape([1, 2, 3]).length).toBeGreaterThan(0);
+    expect(validatePolicyDocumentShape('nope').length).toBeGreaterThan(0);
+  });
+
+  it('indexes warnings by statement position', () => {
+    const warnings = validatePolicyDocumentShape({
+      statements: [
+        { effect: 'allow', ops: ['read'], schema: 'lead', selector: { filter: {} } },
+        { ops: ['read'], schema: 'lead', selector: { filter: {} } },
+      ],
+    });
+    expect(warnings.some((w) => w.startsWith('statement[1]'))).toBe(true);
   });
 });
 
