@@ -1,0 +1,79 @@
+.role-readonly-fields {
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  border: 1px solid #dfe5ec;
+  border-radius: 8px;
+  background: #f9fafb;
+}
+
+.role-readonly-fields .form-field:last-child {
+  margin-bottom: 0;
+}
+
+.role-desc-preview {
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.jump-section {
+  margin-top: 14px;
+  margin-bottom: 14px;
+}
+
+.jump-input-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.jump-input-group .form-input {
+  flex: 1;
+  min-height: 38px;
+}
+
+.parent-role-list {
+  margin-top: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #dfe5ec;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.parent-role-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #f0f3f7;
+  cursor: pointer;
+}
+
+.parent-role-item:last-child {
+  border-bottom: 0;
+}
+
+.parent-role-item:hover {
+  background: #f6f9fc;
+}
+
+.parent-role-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 14px;
+}
+
+.parent-role-meta {
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+}
+
+@media (max-width: 860px) {
+  .role-desc-preview {
+    max-width: 160px;
+  }
+}

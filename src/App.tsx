@@ -19,6 +19,7 @@ import { LocalSchemaEditor } from './schema/LocalSchemaEditor';
 import { SchemaWorkspace } from './schemas/SchemaWorkspace';
 import { WorkflowWorkspace } from './workflows/WorkflowWorkspace';
 import { PolicyWorkspace } from './policies/PolicyWorkspace';
+import { RoleWorkspace } from './roles/RoleWorkspace';
 import type {
   AuthProviderConfig,
   RuntimeConfig,
@@ -335,7 +336,7 @@ export default function App() {
         <p className="status">{status}</p>
         {workspace === 'overview' && <OverviewDashboard client={client} onNavigate={setWorkspace} />}
         {workspace === 'users' && <Placeholder title="Users Management" description="#27 — Manage users, identity providers, OU membership, and reporting lines." />}
-        {workspace === 'roles' && <Placeholder title="Roles Management" description="#28 — Manage roles, slugs, external keys, and parent-role hierarchy." />}
+        {workspace === 'roles' && <RoleWorkspace client={client} />}
         {workspace === 'policies' && <PolicyWorkspace client={client} />}
         {workspace === 'organization' && <Placeholder title="Organization Management" description="#32 — Manage the OU tree, OU policy attachments, and user placement." />}
         {workspace === 'model' && <ModelWorkspace clientReady={client !== null} />}
