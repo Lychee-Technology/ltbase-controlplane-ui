@@ -21,6 +21,7 @@ import { WorkflowWorkspace } from './workflows/WorkflowWorkspace';
 import { PolicyWorkspace } from './policies/PolicyWorkspace';
 import { RoleWorkspace } from './roles/RoleWorkspace';
 import { UserWorkspace } from './users/UserWorkspace';
+import { ReferralWorkspace } from './referrals/ReferralWorkspace';
 import type {
   AuthProviderConfig,
   RuntimeConfig,
@@ -344,7 +345,7 @@ export default function App() {
         {workspace === 'workflow' && <WorkflowWorkspace clientReady={client !== null} />}
         {workspace === 'security' && <Placeholder title="Security policy editor" description="Roles, policies, bindings, capability assignments, and compliance profile will use the shared draft/apply model." />}
         {workspace === 'health' && <Placeholder title="Deployment health" description="Status, schema drift, dry-run repair, and confirmed repair operations will be shown here." />}
-        {workspace === 'referrals' && <Placeholder title="Referral management" description="Create, import, search, update, disable, and safely delete referral codes from this workspace." />}
+        {workspace === 'referrals' && <ReferralWorkspace client={client} />}
       </section>
     </main>
   );

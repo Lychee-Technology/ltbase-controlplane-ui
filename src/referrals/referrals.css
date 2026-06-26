@@ -1,0 +1,41 @@
+.status-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.status-badge.available {
+  background: #e3f6ed;
+  color: #16794a;
+}
+
+.status-badge.used {
+  background: #eff6ff;
+  color: #1f6feb;
+}
+
+.status-badge.expired {
+  background: #fdf1db;
+  color: #9a6300;
+}
+
+.status-badge.disabled {
+  background: #f6f7f9;
+  color: #627287;
+}
+
+.import-textarea {
+  width: 100%;
+  min-height: 160px;
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid #cfd8e3;
+  border-radius: 8px;
+  color: #17202a;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 13px;
+  resize: vertical;
+}
