@@ -71,6 +71,10 @@ vi.mock('./roles/RoleWorkspace', () => ({
   RoleWorkspace: ({ client }: { client: unknown }) => <div>Role workspace ready: {String(client !== null)}</div>,
 }));
 
+vi.mock('./users/UserWorkspace', () => ({
+  UserWorkspace: ({ client }: { client: unknown }) => <div>User workspace ready: {String(client !== null)}</div>,
+}));
+
 const runtimeConfig: RuntimeConfig = {
   stacks: [
     {

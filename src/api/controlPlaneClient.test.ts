@@ -313,4 +313,115 @@ describe('createControlPlaneClient', () => {
       expect.objectContaining({ method: 'DELETE' }),
     );
   });
+
+  it('listUsers calls GET /api/v1/auth/users with no query string when no filters given', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ items: [] }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.listUsers();
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/auth/users',
+      expect.objectContaining({ headers: expect.any(Headers) }),
+    );
+  });
+
+  it('listUsers encodes filter params into query string', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ items: [] }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.listUsers({ q: 'alice', provider: 'google', ou_id: 'ou-root', manager_user_id: 'user-mgr' });
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/auth/users?q=alice&provider=google&ou_id=ou-root&manager_user_id=user-mgr',
+      expect.objectContaining({ headers: expect.any(Headers) }),
+    );
+  });
+
+  it('getUser calls GET with encoded user id', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: { user: {} } }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.getUser('user-1');
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/auth/users/user-1',
+      expect.objectContaining({ headers: expect.any(Headers) }),
+    );
+  });
+
+  it('updateUser calls PATCH with primary_ou_id and report_to_user_id', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: { user: {} } }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.updateUser('user-1', { primary_ou_id: 'ou-child', report_to_user_id: 'user-3' });
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/auth/users/user-1',
+      expect.objectContaining({
+        method: 'PATCH',
+        body: JSON.stringify({ primary_ou_id: 'ou-child', report_to_user_id: 'user-3' }),
+      }),
+    );
+  });
+
+  it('attachUserRole calls PUT with encoded user id and role id', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: { status: 'attached' } }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.attachUserRole('user-1', 'role.admin');
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/auth/users/user-1/roles/role.admin',
+      expect.objectContaining({ method: 'PUT' }),
+    );
+  });
+
+  it('detachUserRole calls DELETE with encoded user id and role id', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: { status: 'detached' } }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.detachUserRole('user-1', 'role.admin');
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/auth/users/user-1/roles/role.admin',
+      expect.objectContaining({ method: 'DELETE' }),
+    );
+  });
+
+  it('listUserPolicies calls GET /api/v1/auth/principals/user/{id}/policies', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ items: [] }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.listUserPolicies('user-1');
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/auth/principals/user/user-1/policies',
+      expect.objectContaining({ headers: expect.any(Headers) }),
+    );
+  });
+
+  it('attachUserPolicy calls PUT with encoded user id and policy id', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: { status: 'attached' } }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.attachUserPolicy('user-1', 'policy.sales_read');
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/auth/principals/user/user-1/policies/policy.sales_read',
+      expect.objectContaining({ method: 'PUT' }),
+    );
+  });
+
+  it('detachUserPolicy calls DELETE with encoded user id and policy id', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: { status: 'detached' } }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.detachUserPolicy('user-1', 'policy.sales_read');
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/auth/principals/user/user-1/policies/policy.sales_read',
+      expect.objectContaining({ method: 'DELETE' }),
+    );
+  });
 });

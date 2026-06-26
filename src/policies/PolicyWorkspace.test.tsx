@@ -42,6 +42,14 @@ function makeClient(overrides?: Partial<ControlPlaneClient>): ControlPlaneClient
     listRolePolicies: vi.fn(),
     attachRolePolicy: vi.fn(),
     detachRolePolicy: vi.fn(),
+    listUsers: vi.fn(),
+    getUser: vi.fn(),
+    updateUser: vi.fn(),
+    attachUserRole: vi.fn(),
+    detachUserRole: vi.fn(),
+    listUserPolicies: vi.fn(),
+    attachUserPolicy: vi.fn(),
+    detachUserPolicy: vi.fn(),
     ...overrides,
   };
 }

@@ -29,6 +29,14 @@ export interface ControlPlaneClient {
   listRolePolicies(roleRef: string): Promise<unknown>;
   attachRolePolicy(roleRef: string, policyRef: string): Promise<unknown>;
   detachRolePolicy(roleRef: string, policyRef: string): Promise<unknown>;
+  listUsers(params?: { q?: string; provider?: string; ou_id?: string; manager_user_id?: string }): Promise<unknown>;
+  getUser(userId: string): Promise<unknown>;
+  updateUser(userId: string, data: { primary_ou_id: string; report_to_user_id: string }): Promise<unknown>;
+  attachUserRole(userId: string, roleId: string): Promise<unknown>;
+  detachUserRole(userId: string, roleId: string): Promise<unknown>;
+  listUserPolicies(userId: string): Promise<unknown>;
+  attachUserPolicy(userId: string, policyId: string): Promise<unknown>;
+  detachUserPolicy(userId: string, policyId: string): Promise<unknown>;
 }
 
 export function createControlPlaneClient(
@@ -92,5 +100,21 @@ export function createControlPlaneClient(
     listRolePolicies: (roleRef) => get(`/auth/principals/role/${encodeURIComponent(roleRef)}/policies`),
     attachRolePolicy: (roleRef, policyRef) => put(`/auth/principals/role/${encodeURIComponent(roleRef)}/policies/${encodeURIComponent(policyRef)}`, {}),
     detachRolePolicy: (roleRef, policyRef) => del(`/auth/principals/role/${encodeURIComponent(roleRef)}/policies/${encodeURIComponent(policyRef)}`),
+    listUsers: (params) => {
+      const qs = new URLSearchParams();
+      if (params?.q) { qs.set('q', params.q); }
+      if (params?.provider) { qs.set('provider', params.provider); }
+      if (params?.ou_id) { qs.set('ou_id', params.ou_id); }
+      if (params?.manager_user_id) { qs.set('manager_user_id', params.manager_user_id); }
+      const q = qs.toString();
+      return get(q ? `/auth/users?${q}` : '/auth/users');
+    },
+    getUser: (userId) => get(`/auth/users/${encodeURIComponent(userId)}`),
+    updateUser: (userId, data) => patch(`/auth/users/${encodeURIComponent(userId)}`, data),
+    attachUserRole: (userId, roleId) => put(`/auth/users/${encodeURIComponent(userId)}/roles/${encodeURIComponent(roleId)}`, {}),
+    detachUserRole: (userId, roleId) => del(`/auth/users/${encodeURIComponent(userId)}/roles/${encodeURIComponent(roleId)}`),
+    listUserPolicies: (userId) => get(`/auth/principals/user/${encodeURIComponent(userId)}/policies`),
+    attachUserPolicy: (userId, policyId) => put(`/auth/principals/user/${encodeURIComponent(userId)}/policies/${encodeURIComponent(policyId)}`, {}),
+    detachUserPolicy: (userId, policyId) => del(`/auth/principals/user/${encodeURIComponent(userId)}/policies/${encodeURIComponent(policyId)}`),
   };
 }
