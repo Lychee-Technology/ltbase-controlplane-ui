@@ -203,4 +203,114 @@ describe('createControlPlaneClient', () => {
       expect.objectContaining({ method: 'DELETE' }),
     );
   });
+
+  it('listRoles calls GET /api/v1/auth/roles', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ items: [] }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.listRoles();
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/auth/roles',
+      expect.objectContaining({ headers: expect.any(Headers) }),
+    );
+  });
+
+  it('getRole calls GET with encoded role ref', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: {} }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.getRole('role.admin');
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/auth/roles/role.admin',
+      expect.objectContaining({ headers: expect.any(Headers) }),
+    );
+  });
+
+  it('createRole calls POST with name, description, parent_role_ids', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: { role: {} } }), { status: 201 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.createRole({
+      name: 'Manager',
+      description: 'People manager',
+      parent_role_ids: ['role-admin-id'],
+    });
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/auth/roles',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ name: 'Manager', description: 'People manager', parent_role_ids: ['role-admin-id'] }),
+      }),
+    );
+  });
+
+  it('updateRole calls PATCH with encoded role ref and body', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: { role: {} } }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.updateRole('role.admin', {
+      name: 'Admin v2',
+      description: 'Updated admin',
+      parent_role_ids: [],
+    });
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/auth/roles/role.admin',
+      expect.objectContaining({
+        method: 'PATCH',
+        body: JSON.stringify({ name: 'Admin v2', description: 'Updated admin', parent_role_ids: [] }),
+      }),
+    );
+  });
+
+  it('deleteRole calls DELETE with encoded role ref', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: { role_id: 'role.admin', status: 'deleted' } }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.deleteRole('role.admin');
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/auth/roles/role.admin',
+      expect.objectContaining({ method: 'DELETE' }),
+    );
+  });
+
+  it('listRolePolicies calls GET with encoded role ref', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ items: [] }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.listRolePolicies('role.admin');
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/auth/principals/role/role.admin/policies',
+      expect.objectContaining({ headers: expect.any(Headers) }),
+    );
+  });
+
+  it('attachRolePolicy calls PUT with encoded role ref and policy ref', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: { status: 'attached' } }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.attachRolePolicy('role.admin', 'policy.sales_read');
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/auth/principals/role/role.admin/policies/policy.sales_read',
+      expect.objectContaining({ method: 'PUT' }),
+    );
+  });
+
+  it('detachRolePolicy calls DELETE with encoded role ref and policy ref', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: { status: 'detached' } }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.detachRolePolicy('role.admin', 'policy.sales_read');
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/auth/principals/role/role.admin/policies/policy.sales_read',
+      expect.objectContaining({ method: 'DELETE' }),
+    );
+  });
 });

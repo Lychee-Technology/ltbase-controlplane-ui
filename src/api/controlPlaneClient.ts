@@ -21,6 +21,14 @@ export interface ControlPlaneClient {
   createPolicy(data: { name: string; description: string; policy_document: unknown }): Promise<unknown>;
   updatePolicy(policyId: string, data: { name: string; description: string; policy_document: unknown }): Promise<unknown>;
   deletePolicy(policyId: string): Promise<unknown>;
+  listRoles(): Promise<unknown>;
+  getRole(roleRef: string): Promise<unknown>;
+  createRole(data: { name: string; description: string; parent_role_ids: string[] }): Promise<unknown>;
+  updateRole(roleRef: string, data: { name: string; description: string; parent_role_ids: string[] }): Promise<unknown>;
+  deleteRole(roleRef: string): Promise<unknown>;
+  listRolePolicies(roleRef: string): Promise<unknown>;
+  attachRolePolicy(roleRef: string, policyRef: string): Promise<unknown>;
+  detachRolePolicy(roleRef: string, policyRef: string): Promise<unknown>;
 }
 
 export function createControlPlaneClient(
@@ -76,5 +84,13 @@ export function createControlPlaneClient(
     createPolicy: (data) => post('/auth/policies', data),
     updatePolicy: (policyId, data) => patch(`/auth/policies/${encodeURIComponent(policyId)}`, data),
     deletePolicy: (policyId) => del(`/auth/policies/${encodeURIComponent(policyId)}`),
+    listRoles: () => get('/auth/roles'),
+    getRole: (roleRef) => get(`/auth/roles/${encodeURIComponent(roleRef)}`),
+    createRole: (data) => post('/auth/roles', data),
+    updateRole: (roleRef, data) => patch(`/auth/roles/${encodeURIComponent(roleRef)}`, data),
+    deleteRole: (roleRef) => del(`/auth/roles/${encodeURIComponent(roleRef)}`),
+    listRolePolicies: (roleRef) => get(`/auth/principals/role/${encodeURIComponent(roleRef)}/policies`),
+    attachRolePolicy: (roleRef, policyRef) => put(`/auth/principals/role/${encodeURIComponent(roleRef)}/policies/${encodeURIComponent(policyRef)}`, {}),
+    detachRolePolicy: (roleRef, policyRef) => del(`/auth/principals/role/${encodeURIComponent(roleRef)}/policies/${encodeURIComponent(policyRef)}`),
   };
 }

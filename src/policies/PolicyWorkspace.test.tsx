@@ -34,6 +34,14 @@ function makeClient(overrides?: Partial<ControlPlaneClient>): ControlPlaneClient
     createPolicy: mocks.createPolicy,
     updatePolicy: mocks.updatePolicy,
     deletePolicy: mocks.deletePolicy,
+    listRoles: vi.fn(),
+    getRole: vi.fn(),
+    createRole: vi.fn(),
+    updateRole: vi.fn(),
+    deleteRole: vi.fn(),
+    listRolePolicies: vi.fn(),
+    attachRolePolicy: vi.fn(),
+    detachRolePolicy: vi.fn(),
     ...overrides,
   };
 }

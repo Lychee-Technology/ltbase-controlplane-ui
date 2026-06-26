@@ -82,3 +82,13 @@ function isControlPlaneErrorShape(value: unknown): value is ControlPlaneError {
     'message' in value
   );
 }
+
+// Shortens a durable UUID for compact display in table cells, keeping the first
+// `max` characters and appending an ellipsis. Purely cosmetic — the full id is
+// still used for API calls. Callers pass the truncation length their layout needs.
+export function truncateUUID(id: string, max = 12): string {
+  if (id.length <= max) {
+    return id;
+  }
+  return id.slice(0, max) + '…';
+}
