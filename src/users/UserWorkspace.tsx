@@ -54,6 +54,7 @@ type DetailLoadState =
 type IndexesLoadState =
   | { kind: 'idle' }
   | { kind: 'loading' }
+  | { kind: 'error'; message: string }
   | { kind: 'ready'; authIndexes: AuthConfigIndexes; ouOptions: OuOption[]; roleOptions: RoleOption[]; policyOptions: PolicyOption[] };
 
 type PolicyLoadState =
@@ -128,7 +129,7 @@ export function UserWorkspace({ client }: { client: ControlPlaneClient | null })
         });
       })
       .catch((error: unknown) => {
-        setIndexes({ kind: 'loading' });
+        setIndexes({ kind: 'error', message: formatControlPlaneError(error) });
       });
   }, [client]);
 
@@ -318,6 +319,26 @@ export function UserWorkspace({ client }: { client: ControlPlaneClient | null })
 
   if (page.kind === 'edit-org') {
     const editingUser = users.find((u) => u.userId === page.userId);
+    if (editingUser && indexes.kind === 'error') {
+      return (
+        <section className="panel">
+          <div className="panel-heading">
+            <div>
+              <p className="eyebrow">User Detail</p>
+              <h2>Edit Organization</h2>
+            </div>
+          </div>
+          <p className="error">{indexes.message}</p>
+          <button
+            className="button ghost spaced-above"
+            type="button"
+            onClick={() => setPage({ kind: 'detail', userId: page.userId })}
+          >
+            Back
+          </button>
+        </section>
+      );
+    }
     if (!editingUser || indexes.kind !== 'ready') {
       return null;
     }
@@ -451,11 +472,15 @@ export function UserWorkspace({ client }: { client: ControlPlaneClient | null })
           attachError={attachError}
           onAttachRole={(roleId) => {
             const userId = page.kind === 'detail' ? page.userId : '';
-            if (userId) { void handleAttachRole(userId, roleId); }
+            if (userId) {
+              void handleAttachRole(userId, roleId);
+            }
           }}
           onDetachRole={(roleId) => {
             const userId = page.kind === 'detail' ? page.userId : '';
-            if (userId) { void handleDetachRole(userId, roleId); }
+            if (userId) {
+              void handleDetachRole(userId, roleId);
+            }
           }}
           policyTab={policyTab}
           onTogglePolicyTab={(userId) => {
@@ -470,11 +495,15 @@ export function UserWorkspace({ client }: { client: ControlPlaneClient | null })
           allPolicies={indexes.kind === 'ready' ? indexes.policyOptions : []}
           onAttachPolicy={(policyId) => {
             const userId = page.kind === 'detail' ? page.userId : '';
-            if (userId) { void handleAttachPolicy(userId, policyId); }
+            if (userId) {
+              void handleAttachPolicy(userId, policyId);
+            }
           }}
           onDetachPolicy={(policyId) => {
             const userId = page.kind === 'detail' ? page.userId : '';
-            if (userId) { void handleDetachPolicy(userId, policyId); }
+            if (userId) {
+              void handleDetachPolicy(userId, policyId);
+            }
           }}
         />
       )}
@@ -565,6 +594,9 @@ function UserDetailPane({
       </div>
 
       {saveError && <p className="error spaced-below">{saveError}</p>}
+      {indexes.kind === 'error' && (
+        <p className="error spaced-below">Could not load OU, role, and policy options: {indexes.message}</p>
+      )}
 
       <dl className="kv-list">
         <dt>User ID</dt>
@@ -594,10 +626,9 @@ function UserDetailPane({
           Roles ({roles.length})
         </button>
         <button
-          className={`button ${policyTab ? 'primary' : 'ghost'}`}
+          className={`button user-tab-button-gap ${policyTab ? 'primary' : 'ghost'}`}
           type="button"
           onClick={() => onTogglePolicyTab(user.userId)}
-          style={{ marginLeft: '8px' }}
         >
           Direct Policies
         </button>

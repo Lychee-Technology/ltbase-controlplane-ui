@@ -394,6 +394,29 @@ describe('UserWorkspace', () => {
     });
   });
 
+  it('surfaces an error when picker indexes fail to load', async () => {
+    mocks.listUsers.mockResolvedValue(sampleUsers);
+    mocks.getAuthConfig.mockRejectedValue(new Error('Indexes unavailable'));
+    mocks.listRoles.mockResolvedValue(sampleRoleOptions);
+    mocks.listPolicies.mockResolvedValue(samplePolicyOptions);
+    mocks.getUser.mockResolvedValue(sampleUser1Detail);
+
+    render(<UserWorkspace client={makeClient()} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('google')).toBeInTheDocument();
+    });
+
+    await userEvent.click(screen.getByText('google'));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Could not load OU, role, and policy options/i),
+      ).toBeInTheDocument();
+    });
+    expect(screen.getByText(/Indexes unavailable/)).toBeInTheDocument();
+  });
+
   it('detaches a policy from user', async () => {
     mocks.listUsers.mockResolvedValue(sampleUsers);
     mocks.getAuthConfig.mockResolvedValue(sampleAuthConfig);

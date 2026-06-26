@@ -43,7 +43,7 @@ export function UserOrgForm({ user, ouOptions, managerOptions, saving, onSave, o
       </div>
 
       <div className="form-fields">
-        <div className="role-readonly-fields">
+        <div className="user-readonly-fields">
           <label className="form-field">
             <span className="form-label">Provider</span>
             <input className="form-input" type="text" value={user.provider || '—'} readOnly disabled />
@@ -75,7 +75,7 @@ export function UserOrgForm({ user, ouOptions, managerOptions, saving, onSave, o
             ))}
           </select>
           {user.primaryOuId && (
-            <span className="muted" style={{ fontSize: '12px', marginTop: '4px', display: 'block' }}>
+            <span className="muted user-org-current-hint">
               Current: {ouLabel}
             </span>
           )}
