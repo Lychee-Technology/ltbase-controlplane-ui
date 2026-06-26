@@ -16,6 +16,11 @@ export interface ControlPlaneClient {
   importReferrals(data: unknown): Promise<unknown>;
   dryRunRepair(): Promise<unknown>;
   applyRepair(): Promise<unknown>;
+  listPolicies(): Promise<unknown>;
+  getPolicy(policyId: string): Promise<unknown>;
+  createPolicy(data: { name: string; description: string; policy_document: unknown }): Promise<unknown>;
+  updatePolicy(policyId: string, data: { name: string; description: string; policy_document: unknown }): Promise<unknown>;
+  deletePolicy(policyId: string): Promise<unknown>;
 }
 
 export function createControlPlaneClient(
@@ -35,6 +40,14 @@ export function createControlPlaneClient(
 
   function post(path: string, data: unknown): Promise<unknown> {
     return requestJSON(baseURL, path, accessToken, jsonRequest('POST', data), fetchImpl);
+  }
+
+  function patch(path: string, data: unknown): Promise<unknown> {
+    return requestJSON(baseURL, path, accessToken, jsonRequest('PATCH', data), fetchImpl);
+  }
+
+  function del(path: string): Promise<unknown> {
+    return requestJSON(baseURL, path, accessToken, { method: 'DELETE' }, fetchImpl);
   }
 
   return {
@@ -58,5 +71,10 @@ export function createControlPlaneClient(
     importReferrals: (data) => post('/auth/referrals?import=1', data),
     dryRunRepair: () => post('/repair/dry-run', {}),
     applyRepair: () => post('/repair/apply', { confirm: true }),
+    listPolicies: () => get('/auth/policies'),
+    getPolicy: (policyId) => get(`/auth/policies/${encodeURIComponent(policyId)}`),
+    createPolicy: (data) => post('/auth/policies', data),
+    updatePolicy: (policyId, data) => patch(`/auth/policies/${encodeURIComponent(policyId)}`, data),
+    deletePolicy: (policyId) => del(`/auth/policies/${encodeURIComponent(policyId)}`),
   };
 }

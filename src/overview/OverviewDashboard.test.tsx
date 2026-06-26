@@ -27,6 +27,11 @@ function makeClient(overrides?: Partial<ControlPlaneClient>): ControlPlaneClient
     importReferrals: vi.fn(),
     dryRunRepair: vi.fn(),
     applyRepair: vi.fn(),
+    listPolicies: vi.fn(),
+    getPolicy: vi.fn(),
+    createPolicy: vi.fn(),
+    updatePolicy: vi.fn(),
+    deletePolicy: vi.fn(),
     ...overrides,
   };
 }

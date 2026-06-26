@@ -125,4 +125,82 @@ describe('createControlPlaneClient', () => {
       }),
     );
   });
+
+  it('listPolicies calls GET /api/v1/auth/policies', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ items: [] }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.listPolicies();
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/auth/policies',
+      expect.objectContaining({ headers: expect.any(Headers) }),
+    );
+  });
+
+  it('getPolicy calls GET with encoded policy id', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: {} }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.getPolicy('admin.controlplane');
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/auth/policies/admin.controlplane',
+      expect.objectContaining({ headers: expect.any(Headers) }),
+    );
+  });
+
+  it('createPolicy calls POST with name, description, policy_document', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: { policy: {} } }), { status: 201 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.createPolicy({
+      name: 'Sales Read',
+      description: 'Read sales data',
+      policy_document: { statements: [] },
+    });
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/auth/policies',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ name: 'Sales Read', description: 'Read sales data', policy_document: { statements: [] } }),
+      }),
+    );
+  });
+
+  it('updatePolicy calls PATCH with encoded policy id and body', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: { policy: {} } }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.updatePolicy('policy.sales_read', {
+      name: 'Sales Read v2',
+      description: 'Updated',
+      policy_document: { statements: [{ effect: 'allow', ops: ['read'], schema: 'lead' }] },
+    });
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/auth/policies/policy.sales_read',
+      expect.objectContaining({
+        method: 'PATCH',
+        body: JSON.stringify({
+          name: 'Sales Read v2',
+          description: 'Updated',
+          policy_document: { statements: [{ effect: 'allow', ops: ['read'], schema: 'lead' }] },
+        }),
+      }),
+    );
+  });
+
+  it('deletePolicy calls DELETE with encoded policy id', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: { status: 'deleted' } }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.deletePolicy('admin.controlplane');
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/auth/policies/admin.controlplane',
+      expect.objectContaining({ method: 'DELETE' }),
+    );
+  });
 });
