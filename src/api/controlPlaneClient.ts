@@ -41,6 +41,10 @@ export interface ControlPlaneClient {
   listUserPolicies(userId: string): Promise<unknown>;
   attachUserPolicy(userId: string, policyId: string): Promise<unknown>;
   detachUserPolicy(userId: string, policyId: string): Promise<unknown>;
+  listBindingPolicies(): Promise<unknown>;
+  createBindingPolicy(data: { enabled: boolean; priority: number; rules: unknown }): Promise<unknown>;
+  updateBindingPolicy(policyId: string, data: { enabled: boolean; priority: number; rules: unknown }): Promise<unknown>;
+  deleteBindingPolicy(policyId: string): Promise<unknown>;
 }
 
 export function createControlPlaneClient(
@@ -124,5 +128,9 @@ export function createControlPlaneClient(
     listUserPolicies: (userId) => get(`/auth/principals/user/${encodeURIComponent(userId)}/policies`),
     attachUserPolicy: (userId, policyId) => put(`/auth/principals/user/${encodeURIComponent(userId)}/policies/${encodeURIComponent(policyId)}`, {}),
     detachUserPolicy: (userId, policyId) => del(`/auth/principals/user/${encodeURIComponent(userId)}/policies/${encodeURIComponent(policyId)}`),
+    listBindingPolicies: () => get('/auth/binding-policies'),
+    createBindingPolicy: (data) => post('/auth/binding-policies', data),
+    updateBindingPolicy: (policyId, data) => patch(`/auth/binding-policies/${encodeURIComponent(policyId)}`, data),
+    deleteBindingPolicy: (policyId) => del(`/auth/binding-policies/${encodeURIComponent(policyId)}`),
   };
 }
