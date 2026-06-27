@@ -1,4 +1,4 @@
-import type { StackConfig } from '../types';
+import type { RepairRequest, StackConfig } from '../types';
 import { jsonRequest, requestJSON } from './http';
 
 export interface ControlPlaneClient {
@@ -18,8 +18,8 @@ export interface ControlPlaneClient {
   updateReferralExpiration(code: string, data: { expires_at_ms: number }): Promise<unknown>;
   disableReferral(code: string): Promise<unknown>;
   deleteReferral(code: string): Promise<unknown>;
-  dryRunRepair(): Promise<unknown>;
-  applyRepair(): Promise<unknown>;
+  dryRunRepair(options?: RepairRequest): Promise<unknown>;
+  applyRepair(options?: RepairRequest): Promise<unknown>;
   listPolicies(): Promise<unknown>;
   getPolicy(policyId: string): Promise<unknown>;
   createPolicy(data: { name: string; description: string; policy_document: unknown }): Promise<unknown>;
@@ -112,8 +112,18 @@ export function createControlPlaneClient(
     updateReferralExpiration: (code, data) => patch(`/auth/referrals/${encodeURIComponent(code)}`, data),
     disableReferral: (code) => post(`/auth/referrals/${encodeURIComponent(code)}/disable`, {}),
     deleteReferral: (code) => del(`/auth/referrals/${encodeURIComponent(code)}`),
-    dryRunRepair: () => post('/repair/dry-run', {}),
-    applyRepair: () => post('/repair/apply', { confirm: true }),
+    dryRunRepair: (options) => {
+      const body: Record<string, unknown> = {};
+      if (options?.project_id) { body.project_id = options.project_id; }
+      if (options?.force_rebuild_views !== undefined) { body.force_rebuild_views = options.force_rebuild_views; }
+      return post('/repair/dry-run', body);
+    },
+    applyRepair: (options) => {
+      const body: Record<string, unknown> = { confirm: true };
+      if (options?.project_id) { body.project_id = options.project_id; }
+      if (options?.force_rebuild_views !== undefined) { body.force_rebuild_views = options.force_rebuild_views; }
+      return post('/repair/apply', body);
+    },
     listPolicies: () => get('/auth/policies'),
     getPolicy: (policyId) => get(`/auth/policies/${encodeURIComponent(policyId)}`),
     createPolicy: (data) => post('/auth/policies', data),
