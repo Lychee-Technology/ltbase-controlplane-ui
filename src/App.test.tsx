@@ -83,6 +83,10 @@ vi.mock('./bindingPolicies/BindingPolicyWorkspace', () => ({
   BindingPolicyWorkspace: ({ client }: { client: unknown }) => <div>Binding Policy workspace ready: {String(client !== null)}</div>,
 }));
 
+vi.mock('./repair/RepairWorkspace', () => ({
+  RepairWorkspace: ({ client }: { client: unknown }) => <div>Repair workspace ready: {String(client !== null)}</div>,
+}));
+
 vi.mock('./organization/OrganizationWorkspace', () => ({
   OrganizationWorkspace: ({ client }: { client: unknown; onNavigateUser?: (userId: string) => void }) => <div>Organization workspace ready: {String(client !== null)}</div>,
 }));

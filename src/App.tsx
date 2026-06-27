@@ -24,6 +24,7 @@ import { UserWorkspace } from './users/UserWorkspace';
 import { OrganizationWorkspace } from './organization/OrganizationWorkspace';
 import { ReferralWorkspace } from './referrals/ReferralWorkspace';
 import { BindingPolicyWorkspace } from './bindingPolicies/BindingPolicyWorkspace';
+import { RepairWorkspace } from './repair/RepairWorkspace';
 import type {
   AuthProviderConfig,
   RuntimeConfig,
@@ -362,7 +363,7 @@ export default function App() {
         {workspace === 'model' && <ModelWorkspace clientReady={client !== null} />}
         {workspace === 'workflow' && <WorkflowWorkspace clientReady={client !== null} />}
         {workspace === 'security' && <Placeholder title="Security policy editor" description="Roles, policies, bindings, capability assignments, and compliance profile will use the shared draft/apply model." />}
-        {workspace === 'health' && <Placeholder title="Deployment health" description="Status, schema drift, dry-run repair, and confirmed repair operations will be shown here." />}
+        {workspace === 'health' && <RepairWorkspace client={client} defaultProjectId={selectedStack?.projectId ?? ''} />}
         {workspace === 'referrals' && <ReferralWorkspace client={client} />}
         {workspace === 'bindingPolicies' && <BindingPolicyWorkspace client={client} />}
       </section>
