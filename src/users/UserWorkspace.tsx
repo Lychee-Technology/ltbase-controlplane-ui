@@ -178,10 +178,12 @@ export function UserWorkspace({ client }: { client: ControlPlaneClient | null })
     setSaving(true);
     setSaveError('');
     try {
-      await client.updateUser(userId, {
-        primary_ou_id: value.primaryOuId,
-        report_to_user_id: value.reportToUserId,
-      });
+      await client.moveUserToOrgUnit(value.primaryOuId, userId);
+      if (value.reportToUserId) {
+        await client.setUserManager(userId, { report_to_user_id: value.reportToUserId });
+      } else {
+        await client.clearUserManager(userId);
+      }
       await loadList();
       void loadDetail(userId);
       setPage({ kind: 'detail', userId });

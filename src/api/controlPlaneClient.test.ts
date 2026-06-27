@@ -532,4 +532,208 @@ describe('createControlPlaneClient', () => {
       expect.objectContaining({ method: 'DELETE' }),
     );
   });
+
+  it('listOrgUnits calls GET /api/v1/org/units with no query string when no params given', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ items: [] }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.listOrgUnits();
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/org/units',
+      expect.objectContaining({ headers: expect.any(Headers) }),
+    );
+  });
+
+  it('listOrgUnits encodes filter params into query string', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ items: [] }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.listOrgUnits({ parent_ou_id: 'ou-root', q: 'sales' });
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/org/units?parent_ou_id=ou-root&q=sales',
+      expect.objectContaining({ headers: expect.any(Headers) }),
+    );
+  });
+
+  it('listOrgUnits sets tree=true in query string', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ items: [] }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.listOrgUnits({ tree: true });
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/org/units?tree=true',
+      expect.objectContaining({ headers: expect.any(Headers) }),
+    );
+  });
+
+  it('getOrgUnit calls GET with encoded ou id', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: { org_unit: {} } }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.getOrgUnit('ou-root');
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/org/units/ou-root',
+      expect.objectContaining({ headers: expect.any(Headers) }),
+    );
+  });
+
+  it('createOrgUnit calls POST with ou_id, name, parent_ou_id, block_inheritance', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: { org_unit: {} } }), { status: 201 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.createOrgUnit({ ou_id: 'ou-sales', name: 'Sales', parent_ou_id: 'ou-root', block_inheritance: true });
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/org/units',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ ou_id: 'ou-sales', name: 'Sales', parent_ou_id: 'ou-root', block_inheritance: true }),
+      }),
+    );
+  });
+
+  it('updateOrgUnit calls PATCH with encoded ou id and body', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: { org_unit: {} } }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.updateOrgUnit('ou-sales', { name: 'Sales v2', parent_ou_id: 'ou-child', block_inheritance: false });
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/org/units/ou-sales',
+      expect.objectContaining({
+        method: 'PATCH',
+        body: JSON.stringify({ name: 'Sales v2', parent_ou_id: 'ou-child', block_inheritance: false }),
+      }),
+    );
+  });
+
+  it('deleteOrgUnit calls DELETE with encoded ou id', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: { ou_id: 'ou-empty', status: 'deleted' } }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.deleteOrgUnit('ou-empty');
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/org/units/ou-empty',
+      expect.objectContaining({ method: 'DELETE' }),
+    );
+  });
+
+  it('listOrgUnitUsers calls GET with encoded ou id and include_subtree param', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ items: [] }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.listOrgUnitUsers('ou-root', { include_subtree: true });
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/org/units/ou-root/users?include_subtree=true',
+      expect.objectContaining({ headers: expect.any(Headers) }),
+    );
+  });
+
+  it('moveUserToOrgUnit calls PUT with encoded ou id and user id', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: { user: {} } }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.moveUserToOrgUnit('ou-sales', 'user-1');
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/org/units/ou-sales/users/user-1',
+      expect.objectContaining({ method: 'PUT' }),
+    );
+  });
+
+  it('listOrgUnitPolicies calls GET with encoded ou id', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ items: [] }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.listOrgUnitPolicies('ou-root');
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/org/units/ou-root/policies',
+      expect.objectContaining({ headers: expect.any(Headers) }),
+    );
+  });
+
+  it('attachOrgUnitPolicy calls PUT with encoded ou id, policy id, and enforced body', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: { attachment: {} } }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.attachOrgUnitPolicy('ou-root', 'policy.sales_read', { enforced: true });
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/org/units/ou-root/policies/policy.sales_read',
+      expect.objectContaining({
+        method: 'PUT',
+        body: JSON.stringify({ enforced: true }),
+      }),
+    );
+  });
+
+  it('detachOrgUnitPolicy calls DELETE with encoded ou id and policy id', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: { status: 'detached' } }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.detachOrgUnitPolicy('ou-root', 'policy.sales_read');
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/org/units/ou-root/policies/policy.sales_read',
+      expect.objectContaining({ method: 'DELETE' }),
+    );
+  });
+
+  it('getUserManager calls GET with encoded user id', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: { user: {}, manager: {} } }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.getUserManager('user-1');
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/org/users/user-1/manager',
+      expect.objectContaining({ headers: expect.any(Headers) }),
+    );
+  });
+
+  it('setUserManager calls PUT with encoded user id and report_to_user_id body', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: { user: {} } }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.setUserManager('user-1', { report_to_user_id: 'user-mgr' });
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/org/users/user-1/manager',
+      expect.objectContaining({
+        method: 'PUT',
+        body: JSON.stringify({ report_to_user_id: 'user-mgr' }),
+      }),
+    );
+  });
+
+  it('clearUserManager calls DELETE with encoded user id', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: { status: 'cleared' } }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.clearUserManager('user-1');
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/org/users/user-1/manager',
+      expect.objectContaining({ method: 'DELETE' }),
+    );
+  });
+
+  it('listUserDirectReports calls GET with encoded user id and recursive param', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ items: [] }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.listUserDirectReports('user-mgr', { recursive: true });
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/org/users/user-mgr/direct-reports?recursive=true',
+      expect.objectContaining({ headers: expect.any(Headers) }),
+    );
+  });
 });
