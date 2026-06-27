@@ -478,4 +478,58 @@ describe('createControlPlaneClient', () => {
       expect.objectContaining({ method: 'DELETE' }),
     );
   });
+
+  it('listBindingPolicies calls GET /api/v1/auth/binding-policies', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ items: [] }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.listBindingPolicies();
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/auth/binding-policies',
+      expect.objectContaining({ headers: expect.any(Headers) }),
+    );
+  });
+
+  it('createBindingPolicy calls POST with enabled, priority, rules', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: { binding_policy: {} } }), { status: 201 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.createBindingPolicy({ enabled: true, priority: 10, rules: [{ l: 'and', c: [] }] });
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/auth/binding-policies',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ enabled: true, priority: 10, rules: [{ l: 'and', c: [] }] }),
+      }),
+    );
+  });
+
+  it('updateBindingPolicy calls PATCH with encoded policy id and body', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: { binding_policy: {} } }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.updateBindingPolicy('0192e0a1-9e5f-7d2c-9f30-cc03dd04ee08', { enabled: false, priority: 5, rules: [] });
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/auth/binding-policies/0192e0a1-9e5f-7d2c-9f30-cc03dd04ee08',
+      expect.objectContaining({
+        method: 'PATCH',
+        body: JSON.stringify({ enabled: false, priority: 5, rules: [] }),
+      }),
+    );
+  });
+
+  it('deleteBindingPolicy calls DELETE with encoded policy id', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: { policy_id: '0192e0a1-9e5f-7d2c-9f30-cc03dd04ee08', status: 'deleted' } }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.deleteBindingPolicy('0192e0a1-9e5f-7d2c-9f30-cc03dd04ee08');
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/auth/binding-policies/0192e0a1-9e5f-7d2c-9f30-cc03dd04ee08',
+      expect.objectContaining({ method: 'DELETE' }),
+    );
+  });
 });

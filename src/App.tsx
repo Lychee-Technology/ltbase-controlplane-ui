@@ -22,6 +22,7 @@ import { PolicyWorkspace } from './policies/PolicyWorkspace';
 import { RoleWorkspace } from './roles/RoleWorkspace';
 import { UserWorkspace } from './users/UserWorkspace';
 import { ReferralWorkspace } from './referrals/ReferralWorkspace';
+import { BindingPolicyWorkspace } from './bindingPolicies/BindingPolicyWorkspace';
 import type {
   AuthProviderConfig,
   RuntimeConfig,
@@ -43,6 +44,7 @@ const workspaces: Array<{ key: WorkspaceKey; label: string; icon: ReactNode }> =
   { key: 'security', label: 'Security & Compliance', icon: <KeyRound size={18} /> },
   { key: 'health', label: 'Deployment Health', icon: <Activity size={18} /> },
   { key: 'referrals', label: 'Referrals', icon: <UsersRound size={18} /> },
+  { key: 'bindingPolicies', label: 'Binding Policies', icon: <Database size={18} /> },
 ];
 
 const refreshingRestoredSessions = new Map<string, string>();
@@ -346,6 +348,7 @@ export default function App() {
         {workspace === 'security' && <Placeholder title="Security policy editor" description="Roles, policies, bindings, capability assignments, and compliance profile will use the shared draft/apply model." />}
         {workspace === 'health' && <Placeholder title="Deployment health" description="Status, schema drift, dry-run repair, and confirmed repair operations will be shown here." />}
         {workspace === 'referrals' && <ReferralWorkspace client={client} />}
+        {workspace === 'bindingPolicies' && <BindingPolicyWorkspace client={client} />}
       </section>
     </main>
   );

@@ -79,6 +79,10 @@ vi.mock('./referrals/ReferralWorkspace', () => ({
   ReferralWorkspace: ({ client }: { client: unknown }) => <div>Referral workspace ready: {String(client !== null)}</div>,
 }));
 
+vi.mock('./bindingPolicies/BindingPolicyWorkspace', () => ({
+  BindingPolicyWorkspace: ({ client }: { client: unknown }) => <div>Binding Policy workspace ready: {String(client !== null)}</div>,
+}));
+
 const runtimeConfig: RuntimeConfig = {
   stacks: [
     {

@@ -59,7 +59,7 @@ export interface DraftRecord<T> {
   updatedAt: string;
 }
 
-export type WorkspaceKey = 'overview' | 'users' | 'roles' | 'policies' | 'organization' | 'model' | 'workflow' | 'security' | 'health' | 'referrals';
+export type WorkspaceKey = 'overview' | 'users' | 'roles' | 'policies' | 'organization' | 'model' | 'workflow' | 'security' | 'health' | 'referrals' | 'bindingPolicies';
 
 export function formatControlPlaneError(error: unknown): string {
   if (isControlPlaneErrorShape(error)) {
