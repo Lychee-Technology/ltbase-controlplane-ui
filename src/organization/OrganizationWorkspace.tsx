@@ -1,16 +1,15 @@
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import type { ControlPlaneClient } from '../api/controlPlaneClient';
-import { formatControlPlaneError, truncateUUID } from '../types';
+import { formatControlPlaneError } from '../types';
 import type { PolicyOption } from '../users/userData';
 import { parseUserList, parsePolicyPickerOptions } from '../users/userData';
 import type { ManagerState, DirectReportsState } from './ManagerPanel';
-import { ManagerPanel } from './ManagerPanel';
-import { OrganizationPoliciesTab } from './OrganizationPoliciesTab';
+import { OrganizationChart } from './OrganizationChart';
+import { OUDetailPane } from './OUDetailPane';
 import { OrganizationTree } from './OrganizationTree';
 import { OrganizationUnitForm } from './OrganizationUnitForm';
 import type { OrgUnitCreateValue, OrgUnitUpdateValue } from './OrganizationUnitForm';
-import { OrganizationUsersTab } from './OrganizationUsersTab';
 import {
   buildOrgTree,
   filterParentOptions,
@@ -22,7 +21,14 @@ import {
   parseOrgUnitPolicies,
   parseOrgUnitUsers,
 } from './organizationData';
-import type { AuthOrgUnit, AuthOrgUser, OrgUnitPolicyAttachment, OrgTree } from './organizationData';
+import type { AuthOrgUnit, AuthOrgUser } from './organizationData';
+import type {
+  OrgPage,
+  OrgListLoadState,
+  DetailLoadState,
+  UsersLoadState,
+  PoliciesLoadState,
+} from './organizationState';
 import './organization.css';
 
 function isNotFoundError(error: unknown): boolean {
@@ -52,38 +58,16 @@ function isOuNotEmptyError(error: unknown): boolean {
   );
 }
 
-type Page =
-  | { kind: 'tree' }
-  | { kind: 'create' }
-  | { kind: 'edit'; ouId: string };
-
-type LoadState =
-  | { kind: 'idle' }
-  | { kind: 'loading' }
-  | { kind: 'error'; message: string }
-  | { kind: 'ready'; units: AuthOrgUnit[]; tree: OrgTree[] };
-
-type DetailLoadState =
-  | { kind: 'idle' }
-  | { kind: 'loading' }
-  | { kind: 'error'; message: string }
-  | { kind: 'ready'; unit: AuthOrgUnit };
-
-type UsersLoadState =
-  | { kind: 'idle' }
-  | { kind: 'loading' }
-  | { kind: 'error'; message: string }
-  | { kind: 'ready'; users: AuthOrgUser[] };
-
-type PoliciesLoadState =
-  | { kind: 'idle' }
-  | { kind: 'loading' }
-  | { kind: 'error'; message: string }
-  | { kind: 'ready'; attachments: OrgUnitPolicyAttachment[] };
-
-export function OrganizationWorkspace({ client }: { client: ControlPlaneClient | null }) {
-  const [page, setPage] = useState<Page>({ kind: 'tree' });
-  const [list, setList] = useState<LoadState>({ kind: 'idle' });
+export function OrganizationWorkspace({
+  client,
+  onNavigateUser,
+}: {
+  client: ControlPlaneClient | null;
+  onNavigateUser?: (userId: string) => void;
+}) {
+  const [view, setView] = useState<'manage' | 'chart'>('manage');
+  const [page, setPage] = useState<OrgPage>({ kind: 'tree' });
+  const [list, setList] = useState<OrgListLoadState>({ kind: 'idle' });
   const [selectedOuId, setSelectedOuId] = useState<string | null>(null);
   const [detail, setDetail] = useState<DetailLoadState>({ kind: 'idle' });
   const [saving, setSaving] = useState(false);
@@ -443,6 +427,37 @@ export function OrganizationWorkspace({ client }: { client: ControlPlaneClient |
     void loadManager(userId);
   }
 
+  function handleChartSelectOu(ouId: string) {
+    selectOu(ouId);
+    setView('manage');
+  }
+
+  function handleChartSelectUser(userId: string) {
+    if (onNavigateUser) {
+      onNavigateUser(userId);
+    }
+  }
+
+  const rootOuOptions = list.kind === 'ready' ? list.units.map((u) => ({ ouId: u.ouId, name: u.name })) : [];
+
+  if (view === 'chart') {
+    return (
+      <div className="policy-layout">
+        <OrganizationChart
+          client={client}
+          rootOuOptions={rootOuOptions}
+          onSelectOu={handleChartSelectOu}
+          onSelectUser={handleChartSelectUser}
+        />
+        <div className="org-chart-back-section">
+          <button className="button ghost" type="button" onClick={() => setView('manage')}>
+            Back to Manage OUs
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (!client) {
     return (
       <section className="panel">
@@ -451,6 +466,9 @@ export function OrganizationWorkspace({ client }: { client: ControlPlaneClient |
             <p className="eyebrow">Organization</p>
             <h2>Organization Management</h2>
           </div>
+          <button className="button ghost" type="button" onClick={() => setView('chart')}>
+            Org Chart
+          </button>
         </div>
         <p className="muted">Sign in to a stack to manage organization.</p>
       </section>
@@ -465,6 +483,9 @@ export function OrganizationWorkspace({ client }: { client: ControlPlaneClient |
             <p className="eyebrow">Organization</p>
             <h2>Organization Management</h2>
           </div>
+          <button className="button ghost" type="button" onClick={() => setView('chart')}>
+            Org Chart
+          </button>
         </div>
         <p className="muted">Loading organization units…</p>
       </section>
@@ -479,6 +500,9 @@ export function OrganizationWorkspace({ client }: { client: ControlPlaneClient |
             <p className="eyebrow">Organization</p>
             <h2>Organization Management</h2>
           </div>
+          <button className="button ghost" type="button" onClick={() => setView('chart')}>
+            Org Chart
+          </button>
         </div>
         <p className="error">{list.message}</p>
         <button className="button ghost spaced-above" type="button" onClick={() => void loadList()}>
@@ -536,9 +560,14 @@ export function OrganizationWorkspace({ client }: { client: ControlPlaneClient |
             <p className="eyebrow">Organization</p>
             <h2>Organization Units</h2>
           </div>
-          <button className="button primary" type="button" onClick={() => setPage({ kind: 'create' })}>
-            <Plus size={16} /> Create
-          </button>
+          <div className="actions">
+            <button className="button ghost" type="button" onClick={() => setView('chart')}>
+              Org Chart
+            </button>
+            <button className="button primary" type="button" onClick={() => setPage({ kind: 'create' })}>
+              <Plus size={16} /> Create
+            </button>
+          </div>
         </div>
 
         {saveError && <p className="error spaced-below">{saveError}</p>}
@@ -616,237 +645,5 @@ export function OrganizationWorkspace({ client }: { client: ControlPlaneClient |
         />
       )}
     </div>
-  );
-}
-
-function OUDetailPane({
-  unit,
-  detail,
-  usersTab,
-  onToggleUsersTab,
-  users,
-  includeSubtree,
-  onToggleSubtree,
-  allUsers,
-  onMoveUser,
-  movingUser,
-  moveError,
-  policiesTab,
-  onTogglePoliciesTab,
-  policies,
-  allPolicies,
-  onAttach,
-  onDetach,
-  attaching,
-  attachError,
-  managerTab,
-  onToggleManagerTab,
-  managerState,
-  allUsersForManager,
-  onSelectManagerUser,
-  onSetManager,
-  onClearManager,
-  managerSaving,
-  managerError,
-  directReportsState,
-  directReportsRecursive,
-  onToggleDirectReportsRecursive,
-  onEdit,
-  onDelete,
-  deleteConfirmation,
-  deleting,
-  deleteError,
-  onDeleteConfirm,
-  onDeleteCancel,
-  isConfirmingDelete,
-  saving,
-}: {
-  unit: AuthOrgUnit;
-  detail: DetailLoadState;
-  usersTab: boolean;
-  onToggleUsersTab: () => void;
-  users: UsersLoadState;
-  includeSubtree: boolean;
-  onToggleSubtree: (value: boolean) => void;
-  allUsers: AuthOrgUser[];
-  onMoveUser: (userId: string) => void;
-  movingUser: boolean;
-  moveError: string;
-  policiesTab: boolean;
-  onTogglePoliciesTab: () => void;
-  policies: PoliciesLoadState;
-  allPolicies: PolicyOption[];
-  onAttach: (policyId: string, enforced: boolean) => void;
-  onDetach: (policyId: string) => void;
-  attaching: boolean;
-  attachError: string;
-  managerTab: boolean;
-  onToggleManagerTab: () => void;
-  managerState: ManagerState;
-  allUsersForManager: AuthOrgUser[];
-  onSelectManagerUser: (userId: string) => void;
-  onSetManager: (reportToUserId: string) => void;
-  onClearManager: () => void;
-  managerSaving: boolean;
-  managerError: string;
-  directReportsState: DirectReportsState;
-  directReportsRecursive: boolean;
-  onToggleDirectReportsRecursive: (recursive: boolean) => void;
-  onEdit: () => void;
-  onDelete: (ouId: string) => void;
-  deleteConfirmation: string | null;
-  deleting: boolean;
-  deleteError: string;
-  onDeleteConfirm: (ouId: string) => void;
-  onDeleteCancel: () => void;
-  isConfirmingDelete: boolean;
-  saving: boolean;
-}) {
-  if (detail.kind === 'loading') {
-    return (
-      <section className="panel">
-        <p className="muted">Loading OU details…</p>
-      </section>
-    );
-  }
-
-  if (detail.kind === 'error') {
-    return (
-      <section className="panel">
-        <p className="error">{detail.message}</p>
-      </section>
-    );
-  }
-
-  return (
-    <section className="panel">
-      <div className="panel-heading">
-        <div>
-          <p className="eyebrow">OU Detail</p>
-          <h2>{unit.name || unit.ouId}</h2>
-        </div>
-        <div className="actions">
-          <button className="button ghost" type="button" onClick={onEdit} disabled={saving}>
-            Edit
-          </button>
-          {isConfirmingDelete ? (
-            <>
-              <button
-                className="button danger"
-                type="button"
-                onClick={() => onDeleteConfirm(unit.ouId)}
-                disabled={deleting}
-              >
-                {deleting ? 'Deleting…' : 'Confirm Delete'}
-              </button>
-              <button className="button ghost" type="button" onClick={onDeleteCancel} disabled={deleting}>
-                Cancel
-              </button>
-            </>
-          ) : (
-            <button
-              className="button ghost"
-              type="button"
-              onClick={() => onDelete(unit.ouId)}
-            >
-              <Trash2 size={16} /> Delete
-            </button>
-          )}
-        </div>
-      </div>
-
-      {deleteError && <p className="error spaced-below">{deleteError}</p>}
-
-      <dl className="org-detail-kv">
-        <dt>OU ID</dt>
-        <dd className="kv-mono">{unit.ouId || '—'}</dd>
-        <dt>Name</dt>
-        <dd>{unit.name || '—'}</dd>
-        <dt>Parent OU</dt>
-        <dd className="kv-mono">{unit.parentOuId || '—'}</dd>
-        <dt>OU Path</dt>
-        <dd className="kv-mono">{unit.ouPath || '—'}</dd>
-        <dt>Block Inheritance</dt>
-        <dd>{unit.blockInheritance ? 'Yes' : 'No'}</dd>
-        <dt>Created</dt>
-        <dd>{unit.createdAt ? new Date(unit.createdAt).toLocaleString() : '—'}</dd>
-        <dt>Updated</dt>
-        <dd>{unit.updatedAt ? new Date(unit.updatedAt).toLocaleString() : '—'}</dd>
-      </dl>
-
-      <div className="panel-section">
-        <div className="org-tab-group">
-          <button
-            className={`button ${usersTab ? 'primary' : 'ghost'}`}
-            type="button"
-            onClick={onToggleUsersTab}
-          >
-            Users
-          </button>
-          <button
-            className={`button ${policiesTab ? 'primary' : 'ghost'}`}
-            type="button"
-            onClick={onTogglePoliciesTab}
-          >
-            Policies
-          </button>
-          <button
-            className={`button ${managerTab ? 'primary' : 'ghost'}`}
-            type="button"
-            onClick={onToggleManagerTab}
-          >
-            Manager
-          </button>
-        </div>
-
-        {usersTab && users.kind === 'ready' && (
-          <OrganizationUsersTab
-            users={users.users}
-            includeSubtree={includeSubtree}
-            onToggleSubtree={onToggleSubtree}
-            allUsers={allUsers}
-            onMoveUser={onMoveUser}
-            moving={movingUser}
-            moveError={moveError}
-          />
-        )}
-        {usersTab && users.kind === 'loading' && <p className="muted spaced-above">Loading users…</p>}
-        {usersTab && users.kind === 'error' && <p className="error spaced-above">{users.message}</p>}
-
-        {policiesTab && policies.kind === 'ready' && (
-          <OrganizationPoliciesTab
-            attachments={policies.attachments}
-            allPolicies={allPolicies}
-            onAttach={onAttach}
-            onDetach={onDetach}
-            attaching={attaching}
-            attachError={attachError}
-          />
-        )}
-        {policiesTab && policies.kind === 'loading' && <p className="muted spaced-above">Loading policies…</p>}
-        {policiesTab && policies.kind === 'error' && <p className="error spaced-above">{policies.message}</p>}
-
-        {managerTab && (
-          <ManagerPanel
-            managerState={managerState}
-            allUsers={allUsersForManager}
-            onSelectUser={onSelectManagerUser}
-            onSetManager={onSetManager}
-            onClearManager={onClearManager}
-            saving={managerSaving}
-            saveError={managerError}
-            directReportsState={directReportsState}
-            directReportsRecursive={directReportsRecursive}
-            onToggleDirectReportsRecursive={onToggleDirectReportsRecursive}
-          />
-        )}
-      </div>
-
-      <div className="org-delete-section">
-        <p className="warning spaced-below">
-          Delete is only available for empty OUs with no child OUs, users, or policy attachments.
-        </p>
-      </div>
-    </section>
   );
 }

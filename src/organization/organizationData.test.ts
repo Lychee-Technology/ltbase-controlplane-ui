@@ -12,6 +12,8 @@ import {
   buildOrgTree,
   getDescendantOuIds,
   filterParentOptions,
+  parseOrgChart,
+  buildOrgChartTree,
 } from './organizationData';
 
 describe('parseOrgUnit', () => {
@@ -311,5 +313,95 @@ describe('filterParentOptions', () => {
     const options = filterParentOptions(units, 'ou-child');
     expect(options).toHaveLength(1);
     expect(options[0].ouId).toBe('ou-root');
+  });
+});
+
+describe('parseOrgChart', () => {
+  it('extracts chart read model from data envelope', () => {
+    const payload = {
+      data: {
+        root_ou_id: 'ou-root',
+        org_units: [
+          { ou_id: 'ou-root', name: 'Root', parent_ou_id: '', ou_path: '/ou-root', block_inheritance: false, created_at: 1, updated_at: 2 },
+          { ou_id: 'ou-child', name: 'Child', parent_ou_id: 'ou-root', ou_path: '/ou-root/ou-child', block_inheritance: true, created_at: 3, updated_at: 4 },
+        ],
+        users: [
+          { user_id: 'user-1', provider: 'google', primary_ou_id: 'ou-root', created_at: 1, updated_at: 2, last_login_at: 3 },
+          { user_id: 'user-2', provider: 'github', primary_ou_id: 'ou-child', created_at: 4, updated_at: 5, last_login_at: 6 },
+        ],
+        policy_attachments: [
+          { ou_id: 'ou-root', policy_id: 'pol-1', enforced: true, created_at: 1, updated_at: 2 },
+        ],
+      },
+    };
+
+    const result = parseOrgChart(payload);
+    expect(result.rootOuId).toBe('ou-root');
+    expect(result.orgUnits).toHaveLength(2);
+    expect(result.orgUnits[0].ouId).toBe('ou-root');
+    expect(result.users).toHaveLength(2);
+    expect(result.users[0].userId).toBe('user-1');
+    expect(result.users[1].userId).toBe('user-2');
+    expect(result.policyAttachments).toHaveLength(1);
+    expect(result.policyAttachments[0].ouId).toBe('ou-root');
+    expect(result.policyAttachments[0].policyId).toBe('pol-1');
+    expect(result.policyAttachments[0].enforced).toBe(true);
+  });
+
+  it('defaults missing arrays to empty', () => {
+    const payload = { data: {} };
+    const result = parseOrgChart(payload);
+    expect(result.orgUnits).toEqual([]);
+    expect(result.users).toEqual([]);
+    expect(result.policyAttachments).toEqual([]);
+    expect(result.rootOuId).toBe('');
+  });
+
+  it('defaults missing data envelope to empty', () => {
+    const result = parseOrgChart({});
+    expect(result.orgUnits).toEqual([]);
+    expect(result.users).toEqual([]);
+    expect(result.policyAttachments).toEqual([]);
+  });
+});
+
+describe('buildOrgChartTree', () => {
+  const sampleModel = {
+    rootOuId: 'ou-rnd',
+    orgUnits: [
+      { ouId: 'ou-rnd', name: 'R&D', parentOuId: '', ouPath: '/ou-rnd', blockInheritance: false, createdAt: 0, updatedAt: 0 },
+      { ouId: 'ou-eng', name: 'Engineering', parentOuId: 'ou-rnd', ouPath: '/ou-rnd/ou-eng', blockInheritance: false, createdAt: 0, updatedAt: 0 },
+      { ouId: 'ou-sales', name: 'Sales', parentOuId: '', ouPath: '/ou-sales', blockInheritance: false, createdAt: 0, updatedAt: 0 },
+    ],
+    users: [
+      { userId: 'user-a', provider: 'google', issuer: '', externalSub: '', primaryOuId: 'ou-rnd', reportToUserId: '', createdAt: 0, updatedAt: 0, lastLoginAt: 0 },
+      { userId: 'user-b', provider: 'github', issuer: '', externalSub: '', primaryOuId: 'ou-eng', reportToUserId: '', createdAt: 0, updatedAt: 0, lastLoginAt: 0 },
+    ],
+    policyAttachments: [
+      { ouId: 'ou-rnd', policyId: 'pol-1', enforced: false, createdAt: 0, updatedAt: 0 },
+    ],
+  };
+
+  it('builds a tree with users and policy attachments assigned to correct nodes', () => {
+    const tree = buildOrgChartTree(sampleModel);
+    expect(tree).toHaveLength(2);
+
+    const rnd = tree.find((n) => n.unit.ouId === 'ou-rnd')!;
+    expect(rnd.users).toHaveLength(1);
+    expect(rnd.users[0].userId).toBe('user-a');
+    expect(rnd.policyAttachments).toHaveLength(1);
+    expect(rnd.policyAttachments[0].policyId).toBe('pol-1');
+    expect(rnd.children).toHaveLength(1);
+    expect(rnd.children[0].unit.ouId).toBe('ou-eng');
+
+    const eng = rnd.children[0];
+    expect(eng.users).toHaveLength(1);
+    expect(eng.users[0].userId).toBe('user-b');
+    expect(eng.policyAttachments).toHaveLength(0);
+  });
+
+  it('returns empty array for empty model', () => {
+    const empty = { rootOuId: '', orgUnits: [], users: [], policyAttachments: [] };
+    expect(buildOrgChartTree(empty)).toEqual([]);
   });
 });

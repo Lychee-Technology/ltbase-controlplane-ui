@@ -208,3 +208,86 @@ export function filterParentOptions(units: AuthOrgUnit[], currentOuId: string): 
   descendants.add(currentOuId);
   return units.filter((u) => !descendants.has(u.ouId));
 }
+
+export interface OrgChartPolicyAttachment {
+  ouId: string;
+  policyId: string;
+  enforced: boolean;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface OrgChartReadModel {
+  rootOuId: string;
+  orgUnits: AuthOrgUnit[];
+  users: AuthOrgUser[];
+  policyAttachments: OrgChartPolicyAttachment[];
+}
+
+export interface OrgChartNode {
+  unit: AuthOrgUnit;
+  children: OrgChartNode[];
+  users: AuthOrgUser[];
+  policyAttachments: OrgChartPolicyAttachment[];
+}
+
+export function parseOrgChart(payload: unknown): OrgChartReadModel {
+  const data = pluckData(payload);
+  const orgUnits = (Array.isArray(data.org_units) ? data.org_units : []) as Array<Record<string, unknown>>;
+  const users = (Array.isArray(data.users) ? data.users : []) as Array<Record<string, unknown>>;
+  const policyAttachments = (Array.isArray(data.policy_attachments) ? data.policy_attachments : []) as Array<Record<string, unknown>>;
+
+  return {
+    rootOuId: String(data.root_ou_id ?? ''),
+    orgUnits: orgUnits.map((u) => parseOrgUnit(u)),
+    users: users.map((u) => parseOrgUser(u)),
+    policyAttachments: policyAttachments.map((a) => ({
+      ouId: String(a.ou_id ?? ''),
+      policyId: String(a.policy_id ?? ''),
+      enforced: a.enforced === true,
+      createdAt: Number(a.created_at ?? 0),
+      updatedAt: Number(a.updated_at ?? 0),
+    })),
+  };
+}
+
+export function buildOrgChartTree(model: OrgChartReadModel): OrgChartNode[] {
+  const byParent = new Map<string, AuthOrgUnit[]>();
+  for (const unit of model.orgUnits) {
+    const key = unit.parentOuId || '__root__';
+    if (!byParent.has(key)) {
+      byParent.set(key, []);
+    }
+    byParent.get(key)!.push(unit);
+  }
+
+  const userByOuId = new Map<string, AuthOrgUser[]>();
+  for (const user of model.users) {
+    const key = user.primaryOuId;
+    if (!userByOuId.has(key)) {
+      userByOuId.set(key, []);
+    }
+    userByOuId.get(key)!.push(user);
+  }
+
+  const policiesByOuId = new Map<string, OrgChartPolicyAttachment[]>();
+  for (const attachment of model.policyAttachments) {
+    const key = attachment.ouId;
+    if (!policiesByOuId.has(key)) {
+      policiesByOuId.set(key, []);
+    }
+    policiesByOuId.get(key)!.push(attachment);
+  }
+
+  function buildChildren(parentId: string): OrgChartNode[] {
+    const children = byParent.get(parentId) ?? [];
+    return children.map((unit) => ({
+      unit,
+      children: buildChildren(unit.ouId),
+      users: userByOuId.get(unit.ouId) ?? [],
+      policyAttachments: policiesByOuId.get(unit.ouId) ?? [],
+    }));
+  }
+
+  return buildChildren('__root__');
+}

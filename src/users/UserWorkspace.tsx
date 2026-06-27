@@ -70,7 +70,15 @@ interface FilterValues {
   manager_user_id: string;
 }
 
-export function UserWorkspace({ client }: { client: ControlPlaneClient | null }) {
+export function UserWorkspace({
+  client,
+  initialUserId,
+  onInitialUserConsumed,
+}: {
+  client: ControlPlaneClient | null;
+  initialUserId?: string | null;
+  onInitialUserConsumed?: () => void;
+}) {
   const [page, setPage] = useState<Page>({ kind: 'list' });
   const [list, setList] = useState<LoadState>({ kind: 'idle' });
   const [detail, setDetail] = useState<DetailLoadState>({ kind: 'idle' });
@@ -107,6 +115,15 @@ export function UserWorkspace({ client }: { client: ControlPlaneClient | null })
   useEffect(() => {
     void loadList();
   }, [loadList]);
+
+  useEffect(() => {
+    if (initialUserId && client && list.kind === 'ready') {
+      selectUser(initialUserId);
+      if (onInitialUserConsumed) {
+        onInitialUserConsumed();
+      }
+    }
+  }, [initialUserId, client, list.kind]);
 
   useEffect(() => {
     if (!client) {

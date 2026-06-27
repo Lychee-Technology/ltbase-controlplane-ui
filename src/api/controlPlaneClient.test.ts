@@ -736,4 +736,40 @@ describe('createControlPlaneClient', () => {
       expect.objectContaining({ headers: expect.any(Headers) }),
     );
   });
+
+  it('getOrgChart calls GET /api/v1/org/charts', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: {} }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.getOrgChart();
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/org/charts',
+      expect.objectContaining({ headers: expect.any(Headers) }),
+    );
+  });
+
+  it('getOrgChart encodes query params for root_ou_id, include_users, include_policies', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: {} }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.getOrgChart({ root_ou_id: 'ou-root', include_users: true, include_policies: true });
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/org/charts?root_ou_id=ou-root&include_users=true&include_policies=true',
+      expect.objectContaining({ headers: expect.any(Headers) }),
+    );
+  });
+
+  it('getOrgChart omits query string when params are empty', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: {} }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.getOrgChart({});
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/org/charts',
+      expect.objectContaining({ headers: expect.any(Headers) }),
+    );
+  });
 });

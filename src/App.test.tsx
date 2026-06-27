@@ -84,7 +84,7 @@ vi.mock('./bindingPolicies/BindingPolicyWorkspace', () => ({
 }));
 
 vi.mock('./organization/OrganizationWorkspace', () => ({
-  OrganizationWorkspace: ({ client }: { client: unknown }) => <div>Organization workspace ready: {String(client !== null)}</div>,
+  OrganizationWorkspace: ({ client }: { client: unknown; onNavigateUser?: (userId: string) => void }) => <div>Organization workspace ready: {String(client !== null)}</div>,
 }));
 
 const runtimeConfig: RuntimeConfig = {
