@@ -16,6 +16,13 @@
   color: #8a7670;
 }
 
+.truncated-cell {
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .rules-preview {
   margin: 0;
   padding: 14px;
