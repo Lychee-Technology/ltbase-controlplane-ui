@@ -59,6 +59,7 @@ export interface ControlPlaneClient {
   setUserManager(userId: string, data: { report_to_user_id: string }): Promise<unknown>;
   clearUserManager(userId: string): Promise<unknown>;
   listUserDirectReports(userId: string, params?: { recursive?: boolean }): Promise<unknown>;
+  getOrgChart(params?: { root_ou_id?: string; include_users?: boolean; include_policies?: boolean }): Promise<unknown>;
 }
 
 export function createControlPlaneClient(
@@ -176,6 +177,14 @@ export function createControlPlaneClient(
       if (params?.recursive) { qs.set('recursive', 'true'); }
       const q = qs.toString();
       return get(q ? `/org/users/${encodeURIComponent(userId)}/direct-reports?${q}` : `/org/users/${encodeURIComponent(userId)}/direct-reports`);
+    },
+    getOrgChart: (params) => {
+      const qs = new URLSearchParams();
+      if (params?.root_ou_id) { qs.set('root_ou_id', params.root_ou_id); }
+      if (params?.include_users) { qs.set('include_users', 'true'); }
+      if (params?.include_policies) { qs.set('include_policies', 'true'); }
+      const q = qs.toString();
+      return get(q ? `/org/charts?${q}` : '/org/charts');
     },
   };
 }

@@ -80,6 +80,7 @@ function makeClient(overrides?: Partial<ControlPlaneClient>): ControlPlaneClient
     detachOrgUnitPolicy: vi.fn(),
     getUserManager: vi.fn(),
     listUserDirectReports: vi.fn(),
+    getOrgChart: vi.fn(),
     ...overrides,
   };
 }
@@ -513,5 +514,20 @@ describe('UserWorkspace', () => {
     await waitFor(() => {
       expect(mocks.detachUserPolicy).toHaveBeenCalledWith('user-1', 'policy-read-id');
     });
+  });
+
+  it('opens user detail when initialUserId is provided', async () => {
+    mocks.listUsers.mockResolvedValue(sampleUsers);
+    mocks.getAuthConfig.mockResolvedValue(sampleAuthConfig);
+    mocks.getUser.mockResolvedValue(sampleUser1Detail);
+    mocks.listRoles.mockResolvedValue(sampleRoleOptions);
+    mocks.listPolicies.mockResolvedValue(samplePolicyOptions);
+
+    const consumed = vi.fn();
+    render(<UserWorkspace client={makeClient()} initialUserId="user-1" onInitialUserConsumed={consumed} />);
+
+    expect(await screen.findByText('User Detail')).toBeInTheDocument();
+    expect(mocks.getUser).toHaveBeenCalledWith('user-1');
+    expect(consumed).toHaveBeenCalled();
   });
 });

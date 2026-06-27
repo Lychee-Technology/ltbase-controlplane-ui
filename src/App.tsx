@@ -56,6 +56,7 @@ export default function App() {
   const [workspace, setWorkspace] = useState<WorkspaceKey>('overview');
   const [session, setSession] = useState<SessionState | null>(null);
   const [status, setStatus] = useState<string>('Loading runtime config...');
+  const [pendingUserDetailId, setPendingUserDetailId] = useState<string | null>(null);
   const selectedStackKeyRef = useRef(selectedStackKey);
   const activeProviderByStackRef = useRef<Record<string, AuthProviderConfig>>({});
   const sessionInteractionRef = useRef(0);
@@ -340,10 +341,24 @@ export default function App() {
 
         <p className="status">{status}</p>
         {workspace === 'overview' && <OverviewDashboard client={client} onNavigate={setWorkspace} />}
-        {workspace === 'users' && <UserWorkspace client={client} />}
+        {workspace === 'users' && (
+          <UserWorkspace
+            client={client}
+            initialUserId={pendingUserDetailId}
+            onInitialUserConsumed={() => setPendingUserDetailId(null)}
+          />
+        )}
         {workspace === 'roles' && <RoleWorkspace client={client} />}
         {workspace === 'policies' && <PolicyWorkspace client={client} />}
-        {workspace === 'organization' && <OrganizationWorkspace client={client} />}
+        {workspace === 'organization' && (
+          <OrganizationWorkspace
+            client={client}
+            onNavigateUser={(userId) => {
+              setPendingUserDetailId(userId);
+              setWorkspace('users');
+            }}
+          />
+        )}
         {workspace === 'model' && <ModelWorkspace clientReady={client !== null} />}
         {workspace === 'workflow' && <WorkflowWorkspace clientReady={client !== null} />}
         {workspace === 'security' && <Placeholder title="Security policy editor" description="Roles, policies, bindings, capability assignments, and compliance profile will use the shared draft/apply model." />}

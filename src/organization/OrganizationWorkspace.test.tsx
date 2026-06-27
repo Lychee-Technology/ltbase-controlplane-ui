@@ -25,6 +25,7 @@ const mocks = vi.hoisted(() => ({
   getUserManager: vi.fn<() => Promise<unknown>>(),
   setUserManager: vi.fn<() => Promise<unknown>>(),
   listUserDirectReports: vi.fn<() => Promise<unknown>>(),
+  getOrgChart: vi.fn<() => Promise<unknown>>(),
   listUsers: vi.fn<() => Promise<unknown>>(),
   listPolicies: vi.fn<() => Promise<unknown>>(),
 }));
@@ -104,6 +105,7 @@ function makeClient(): ControlPlaneClient {
     setUserManager: mocks.setUserManager,
     clearUserManager: vi.fn(),
     listUserDirectReports: mocks.listUserDirectReports,
+    getOrgChart: mocks.getOrgChart,
   } as unknown as ControlPlaneClient;
 }
 

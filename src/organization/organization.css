@@ -121,3 +121,137 @@
   padding-top: 14px;
   border-top: 1px solid #dfe5ec;
 }
+
+.org-chart-controls {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  margin: 14px 0;
+}
+
+.org-chart-canvas {
+  margin-top: 14px;
+}
+
+.org-chart-node {
+  margin-bottom: 4px;
+}
+
+.org-chart-node-card {
+  border: 1px solid #dfe5ec;
+  border-radius: 8px;
+  padding: 12px 14px;
+  cursor: pointer;
+  background: #fff;
+  transition: border-color 0.15s;
+}
+
+.org-chart-node-card:hover {
+  border-color: #1f6feb;
+}
+
+.org-chart-node-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.org-chart-node-name {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.org-chart-node-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 6px;
+  font-size: 12px;
+}
+
+.org-chart-node-id {
+  color: #627287;
+  font-family: monospace;
+}
+
+.org-chart-counts {
+  display: flex;
+  gap: 6px;
+}
+
+.org-chart-badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 12px;
+  background: #eff6ff;
+  color: #1f6feb;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.org-chart-children {
+  margin-left: 28px;
+  padding-left: 12px;
+  border-left: 2px solid #dfe5ec;
+}
+
+.org-chart-section-label {
+  font-size: 12px;
+  color: #627287;
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+.org-chart-users {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.org-chart-user-chip {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  border: 1px solid #dfe5ec;
+  background: #fff;
+  color: #1f6feb;
+  font-size: 12px;
+  font-family: monospace;
+  cursor: pointer;
+}
+
+.org-chart-user-chip:hover {
+  border-color: #1f6feb;
+  background: #eff6ff;
+}
+
+.org-chart-policies {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.org-chart-policy-chip {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 12px;
+  font-family: monospace;
+}
+
+.org-chart-enforced {
+  font-size: 11px;
+  color: #627287;
+  margin-left: 3px;
+}
+
+.org-chart-back-section {
+  margin-top: 14px;
+}

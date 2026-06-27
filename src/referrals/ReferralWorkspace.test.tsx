@@ -73,6 +73,7 @@ function makeClient(overrides?: Partial<ControlPlaneClient>): ControlPlaneClient
     setUserManager: vi.fn(),
     clearUserManager: vi.fn(),
     listUserDirectReports: vi.fn(),
+    getOrgChart: vi.fn(),
     ...overrides,
   };
 }
