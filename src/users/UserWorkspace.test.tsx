@@ -8,6 +8,9 @@ const mocks = vi.hoisted(() => ({
   listUsers: vi.fn<() => Promise<unknown>>(),
   getUser: vi.fn<() => Promise<unknown>>(),
   updateUser: vi.fn<() => Promise<unknown>>(),
+  moveUserToOrgUnit: vi.fn<() => Promise<unknown>>(),
+  setUserManager: vi.fn<() => Promise<unknown>>(),
+  clearUserManager: vi.fn<() => Promise<unknown>>(),
   attachUserRole: vi.fn<() => Promise<unknown>>(),
   detachUserRole: vi.fn<() => Promise<unknown>>(),
   listUserPolicies: vi.fn<() => Promise<unknown>>(),
@@ -54,6 +57,9 @@ function makeClient(overrides?: Partial<ControlPlaneClient>): ControlPlaneClient
     listUsers: mocks.listUsers,
     getUser: mocks.getUser,
     updateUser: mocks.updateUser,
+    moveUserToOrgUnit: mocks.moveUserToOrgUnit,
+    setUserManager: mocks.setUserManager,
+    clearUserManager: mocks.clearUserManager,
     attachUserRole: mocks.attachUserRole,
     detachUserRole: mocks.detachUserRole,
     listUserPolicies: mocks.listUserPolicies,
@@ -63,6 +69,17 @@ function makeClient(overrides?: Partial<ControlPlaneClient>): ControlPlaneClient
     createBindingPolicy: vi.fn(),
     updateBindingPolicy: vi.fn(),
     deleteBindingPolicy: vi.fn(),
+    listOrgUnits: vi.fn(),
+    getOrgUnit: vi.fn(),
+    createOrgUnit: vi.fn(),
+    updateOrgUnit: vi.fn(),
+    deleteOrgUnit: vi.fn(),
+    listOrgUnitUsers: vi.fn(),
+    listOrgUnitPolicies: vi.fn(),
+    attachOrgUnitPolicy: vi.fn(),
+    detachOrgUnitPolicy: vi.fn(),
+    getUserManager: vi.fn(),
+    listUserDirectReports: vi.fn(),
     ...overrides,
   };
 }
@@ -339,7 +356,7 @@ describe('UserWorkspace', () => {
     mocks.listRoles.mockResolvedValue(sampleRoleOptions);
     mocks.listPolicies.mockResolvedValue(samplePolicyOptions);
     mocks.getUser.mockResolvedValue(sampleUser1Detail);
-    mocks.updateUser.mockRejectedValue({ code: 'invalid_org_cycle', message: 'cycle detected' });
+    mocks.moveUserToOrgUnit.mockRejectedValue({ code: 'invalid_org_cycle', message: 'cycle detected' });
 
     render(<UserWorkspace client={makeClient()} />);
 
@@ -364,6 +381,43 @@ describe('UserWorkspace', () => {
     await waitFor(() => {
       expect(screen.getByText(/organization cycle/i)).toBeInTheDocument();
     });
+  });
+
+  it('clears the manager when the user has no reporting line on org save', async () => {
+    mocks.listUsers.mockResolvedValue(sampleUsers);
+    mocks.getAuthConfig.mockResolvedValue(sampleAuthConfig);
+    mocks.listRoles.mockResolvedValue(sampleRoleOptions);
+    mocks.listPolicies.mockResolvedValue(samplePolicyOptions);
+    mocks.getUser.mockResolvedValue(sampleUser1Detail);
+    mocks.moveUserToOrgUnit.mockResolvedValue({});
+    mocks.clearUserManager.mockResolvedValue({});
+
+    render(<UserWorkspace client={makeClient()} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('google')).toBeInTheDocument();
+    });
+
+    await userEvent.click(screen.getByText('google'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Edit Org')).toBeInTheDocument();
+    });
+
+    await userEvent.click(screen.getByText('Edit Org'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Edit Organization')).toBeInTheDocument();
+    });
+
+    // user-1 has no manager, so "Reports To" stays on "No manager" and saving
+    // must take the clear-manager branch rather than set-manager.
+    await userEvent.click(screen.getByText('Save'));
+
+    await waitFor(() => {
+      expect(mocks.clearUserManager).toHaveBeenCalledWith('user-1');
+    });
+    expect(mocks.setUserManager).not.toHaveBeenCalled();
   });
 
   it('shows policies tab and attaches a policy', async () => {

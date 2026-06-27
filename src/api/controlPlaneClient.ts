@@ -45,6 +45,20 @@ export interface ControlPlaneClient {
   createBindingPolicy(data: { enabled: boolean; priority: number; rules: unknown }): Promise<unknown>;
   updateBindingPolicy(policyId: string, data: { enabled: boolean; priority: number; rules: unknown }): Promise<unknown>;
   deleteBindingPolicy(policyId: string): Promise<unknown>;
+  listOrgUnits(params?: { parent_ou_id?: string; tree?: boolean; q?: string }): Promise<unknown>;
+  getOrgUnit(ouId: string): Promise<unknown>;
+  createOrgUnit(data: { ou_id: string; name: string; parent_ou_id: string; block_inheritance: boolean }): Promise<unknown>;
+  updateOrgUnit(ouId: string, data: { name: string; parent_ou_id: string; block_inheritance: boolean }): Promise<unknown>;
+  deleteOrgUnit(ouId: string): Promise<unknown>;
+  listOrgUnitUsers(ouId: string, params?: { include_subtree?: boolean }): Promise<unknown>;
+  moveUserToOrgUnit(ouId: string, userId: string): Promise<unknown>;
+  listOrgUnitPolicies(ouId: string): Promise<unknown>;
+  attachOrgUnitPolicy(ouId: string, policyId: string, data: { enforced: boolean }): Promise<unknown>;
+  detachOrgUnitPolicy(ouId: string, policyId: string): Promise<unknown>;
+  getUserManager(userId: string): Promise<unknown>;
+  setUserManager(userId: string, data: { report_to_user_id: string }): Promise<unknown>;
+  clearUserManager(userId: string): Promise<unknown>;
+  listUserDirectReports(userId: string, params?: { recursive?: boolean }): Promise<unknown>;
 }
 
 export function createControlPlaneClient(
@@ -132,5 +146,36 @@ export function createControlPlaneClient(
     createBindingPolicy: (data) => post('/auth/binding-policies', data),
     updateBindingPolicy: (policyId, data) => patch(`/auth/binding-policies/${encodeURIComponent(policyId)}`, data),
     deleteBindingPolicy: (policyId) => del(`/auth/binding-policies/${encodeURIComponent(policyId)}`),
+    listOrgUnits: (params) => {
+      const qs = new URLSearchParams();
+      if (params?.parent_ou_id) { qs.set('parent_ou_id', params.parent_ou_id); }
+      if (params?.tree) { qs.set('tree', 'true'); }
+      if (params?.q) { qs.set('q', params.q); }
+      const q = qs.toString();
+      return get(q ? `/org/units?${q}` : '/org/units');
+    },
+    getOrgUnit: (ouId) => get(`/org/units/${encodeURIComponent(ouId)}`),
+    createOrgUnit: (data) => post('/org/units', data),
+    updateOrgUnit: (ouId, data) => patch(`/org/units/${encodeURIComponent(ouId)}`, data),
+    deleteOrgUnit: (ouId) => del(`/org/units/${encodeURIComponent(ouId)}`),
+    listOrgUnitUsers: (ouId, params) => {
+      const qs = new URLSearchParams();
+      if (params?.include_subtree) { qs.set('include_subtree', 'true'); }
+      const q = qs.toString();
+      return get(q ? `/org/units/${encodeURIComponent(ouId)}/users?${q}` : `/org/units/${encodeURIComponent(ouId)}/users`);
+    },
+    moveUserToOrgUnit: (ouId, userId) => put(`/org/units/${encodeURIComponent(ouId)}/users/${encodeURIComponent(userId)}`, {}),
+    listOrgUnitPolicies: (ouId) => get(`/org/units/${encodeURIComponent(ouId)}/policies`),
+    attachOrgUnitPolicy: (ouId, policyId, data) => put(`/org/units/${encodeURIComponent(ouId)}/policies/${encodeURIComponent(policyId)}`, data),
+    detachOrgUnitPolicy: (ouId, policyId) => del(`/org/units/${encodeURIComponent(ouId)}/policies/${encodeURIComponent(policyId)}`),
+    getUserManager: (userId) => get(`/org/users/${encodeURIComponent(userId)}/manager`),
+    setUserManager: (userId, data) => put(`/org/users/${encodeURIComponent(userId)}/manager`, data),
+    clearUserManager: (userId) => del(`/org/users/${encodeURIComponent(userId)}/manager`),
+    listUserDirectReports: (userId, params) => {
+      const qs = new URLSearchParams();
+      if (params?.recursive) { qs.set('recursive', 'true'); }
+      const q = qs.toString();
+      return get(q ? `/org/users/${encodeURIComponent(userId)}/direct-reports?${q}` : `/org/users/${encodeURIComponent(userId)}/direct-reports`);
+    },
   };
 }

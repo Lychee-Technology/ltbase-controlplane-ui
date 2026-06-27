@@ -21,6 +21,7 @@ import { WorkflowWorkspace } from './workflows/WorkflowWorkspace';
 import { PolicyWorkspace } from './policies/PolicyWorkspace';
 import { RoleWorkspace } from './roles/RoleWorkspace';
 import { UserWorkspace } from './users/UserWorkspace';
+import { OrganizationWorkspace } from './organization/OrganizationWorkspace';
 import { ReferralWorkspace } from './referrals/ReferralWorkspace';
 import { BindingPolicyWorkspace } from './bindingPolicies/BindingPolicyWorkspace';
 import type {
@@ -342,7 +343,7 @@ export default function App() {
         {workspace === 'users' && <UserWorkspace client={client} />}
         {workspace === 'roles' && <RoleWorkspace client={client} />}
         {workspace === 'policies' && <PolicyWorkspace client={client} />}
-        {workspace === 'organization' && <Placeholder title="Organization Management" description="#32 — Manage the OU tree, OU policy attachments, and user placement." />}
+        {workspace === 'organization' && <OrganizationWorkspace client={client} />}
         {workspace === 'model' && <ModelWorkspace clientReady={client !== null} />}
         {workspace === 'workflow' && <WorkflowWorkspace clientReady={client !== null} />}
         {workspace === 'security' && <Placeholder title="Security policy editor" description="Roles, policies, bindings, capability assignments, and compliance profile will use the shared draft/apply model." />}
