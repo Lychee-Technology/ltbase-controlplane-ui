@@ -9,6 +9,17 @@ type LoadState =
   | { kind: 'error'; message: string }
   | { kind: 'ready'; items: WorkflowSummary[] };
 
+function WorkflowPanelHeading() {
+  return (
+    <div className="panel-heading">
+      <div>
+        <p className="eyebrow">Runtime workflow</p>
+        <h2>Workflow Summaries</h2>
+      </div>
+    </div>
+  );
+}
+
 export function WorkflowWorkspace({ client }: { client: ControlPlaneClient | null }) {
   const [state, setState] = useState<LoadState>({ kind: 'idle' });
   const [loadTrigger, setLoadTrigger] = useState(0);
@@ -40,12 +51,7 @@ export function WorkflowWorkspace({ client }: { client: ControlPlaneClient | nul
   if (!client) {
     return (
       <section className="panel">
-        <div className="panel-heading">
-          <div>
-            <p className="eyebrow">Runtime workflow</p>
-            <h2>Workflow Summaries</h2>
-          </div>
-        </div>
+        <WorkflowPanelHeading />
         <p className="muted">Sign in to a stack to load workflow summaries.</p>
       </section>
     );
@@ -54,12 +60,7 @@ export function WorkflowWorkspace({ client }: { client: ControlPlaneClient | nul
   if (state.kind === 'loading' || state.kind === 'idle') {
     return (
       <section className="panel">
-        <div className="panel-heading">
-          <div>
-            <p className="eyebrow">Runtime workflow</p>
-            <h2>Workflow Summaries</h2>
-          </div>
-        </div>
+        <WorkflowPanelHeading />
         <p className="muted">Loading workflow summaries…</p>
       </section>
     );
@@ -68,12 +69,7 @@ export function WorkflowWorkspace({ client }: { client: ControlPlaneClient | nul
   if (state.kind === 'error') {
     return (
       <section className="panel">
-        <div className="panel-heading">
-          <div>
-            <p className="eyebrow">Runtime workflow</p>
-            <h2>Workflow Summaries</h2>
-          </div>
-        </div>
+        <WorkflowPanelHeading />
         <p className="error">{state.message}</p>
         <button
           className="button ghost spaced-above"
@@ -91,12 +87,7 @@ export function WorkflowWorkspace({ client }: { client: ControlPlaneClient | nul
   if (items.length === 0) {
     return (
       <section className="panel">
-        <div className="panel-heading">
-          <div>
-            <p className="eyebrow">Runtime workflow</p>
-            <h2>Workflow Summaries</h2>
-          </div>
-        </div>
+        <WorkflowPanelHeading />
         <p className="muted">
           No workflow definitions found. Set{' '}
           <code>LTBASE_LOCAL_TESTING_WORKFLOW_DEFINITION_PATHS</code> or add
@@ -108,12 +99,7 @@ export function WorkflowWorkspace({ client }: { client: ControlPlaneClient | nul
 
   return (
     <section className="panel">
-      <div className="panel-heading">
-        <div>
-          <p className="eyebrow">Runtime workflow</p>
-          <h2>Workflow Summaries</h2>
-        </div>
-      </div>
+      <WorkflowPanelHeading />
       <p className="muted spaced-below">
         Workflow definitions loaded from the local testing environment. This is
         a diagnostic view — not critical for production.

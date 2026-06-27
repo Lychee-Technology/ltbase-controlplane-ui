@@ -54,3 +54,12 @@ The local JSON Schema editor is intentionally output-only:
 - the editor must not update Control Plane schema registry records
 
 Schema files still move through the private deployment repository under `customer-owned/schemas/`.
+
+## Workflow Summaries
+
+The Workflows page is a read-only diagnostic view of workflow definitions:
+
+- it lists each workflow's name, active version, and referenced tools
+- it only fetches from the Control Plane `GET /api/v1/workflows` endpoint
+- definitions are populated only in local testing, when `LTBASE_LOCAL_TESTING_WORKFLOW_DEFINITION_PATHS` is set or standard paths exist
+- it must not author, edit, or apply workflow definitions

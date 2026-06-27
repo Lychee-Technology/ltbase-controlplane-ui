@@ -51,4 +51,17 @@ describe('parseWorkflowList', () => {
 
     expect(result[0].referencedTools).toEqual([]);
   });
+
+  it('returns empty-shape summaries for null or non-object items', () => {
+    const result = parseWorkflowList({ items: [null, 'oops', 42] });
+
+    expect(result).toHaveLength(3);
+    for (const summary of result) {
+      expect(summary).toEqual<WorkflowSummary>({
+        name: '',
+        activeVersion: '',
+        referencedTools: [],
+      });
+    }
+  });
 });

@@ -14,6 +14,9 @@ export function parseWorkflowList(payload: unknown): WorkflowSummary[] {
 }
 
 function parseWorkflowSummary(payload: unknown): WorkflowSummary {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    return { name: '', activeVersion: '', referencedTools: [] };
+  }
   const data = payload as Record<string, unknown>;
   return {
     name: String(data.name ?? ''),
