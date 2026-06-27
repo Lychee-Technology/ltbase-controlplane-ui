@@ -61,6 +61,11 @@ export interface DraftRecord<T> {
 
 export type WorkspaceKey = 'overview' | 'users' | 'roles' | 'policies' | 'organization' | 'model' | 'workflow' | 'security' | 'health' | 'referrals' | 'bindingPolicies';
 
+export interface RepairRequest {
+  project_id?: string;
+  force_rebuild_views?: boolean;
+}
+
 export function formatControlPlaneError(error: unknown): string {
   if (isControlPlaneErrorShape(error)) {
     const parts: string[] = [];

@@ -111,7 +111,52 @@ describe('createControlPlaneClient', () => {
     );
   });
 
-  it('applyRepair sends confirm:true', async () => {
+  it('dryRunRepair calls POST /api/v1/repair/dry-run with empty body when no options given', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: {} }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.dryRunRepair();
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/repair/dry-run',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({}),
+      }),
+    );
+  });
+
+  it('dryRunRepair sends project_id and force_rebuild_views when provided', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: {} }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.dryRunRepair({ project_id: 'custom-proj', force_rebuild_views: true });
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/repair/dry-run',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ project_id: 'custom-proj', force_rebuild_views: true }),
+      }),
+    );
+  });
+
+  it('dryRunRepair omits project_id when empty string provided', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: {} }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.dryRunRepair({ project_id: '' });
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/repair/dry-run',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({}),
+      }),
+    );
+  });
+
+  it('applyRepair sends confirm:true with empty body when no options given', async () => {
     const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: {} }), { status: 200 }));
     const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
 
@@ -122,6 +167,21 @@ describe('createControlPlaneClient', () => {
       expect.objectContaining({
         method: 'POST',
         body: JSON.stringify({ confirm: true }),
+      }),
+    );
+  });
+
+  it('applyRepair sends confirm:true with project_id and force_rebuild_views', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: {} }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.applyRepair({ project_id: 'custom-proj', force_rebuild_views: false });
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/repair/apply',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ confirm: true, project_id: 'custom-proj', force_rebuild_views: false }),
       }),
     );
   });
