@@ -60,7 +60,7 @@ vi.mock('./schemas/SchemaWorkspace', () => ({
 }));
 
 vi.mock('./workflows/WorkflowWorkspace', () => ({
-  WorkflowWorkspace: ({ clientReady }: { clientReady: boolean }) => <div>Workflow workspace ready: {String(clientReady)}</div>,
+  WorkflowWorkspace: ({ client }: { client: unknown }) => <div>Workflow workspace ready: {String(client !== null)}</div>,
 }));
 
 vi.mock('./policies/PolicyWorkspace', () => ({

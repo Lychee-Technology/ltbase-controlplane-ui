@@ -43,7 +43,7 @@ const workspaces: Array<{ key: WorkspaceKey; label: string; icon: ReactNode }> =
   { key: 'policies', label: 'Policies', icon: <Database size={18} /> },
   { key: 'organization', label: 'Organization', icon: <Database size={18} /> },
   { key: 'model', label: 'Model & Capabilities', icon: <Database size={18} /> },
-  { key: 'workflow', label: 'Workflow Authoring', icon: <Database size={18} /> },
+  { key: 'workflow', label: 'Workflows', icon: <Database size={18} /> },
   { key: 'security', label: 'Catalogs & Compliance', icon: <KeyRound size={18} /> },
   { key: 'health', label: 'Deployment Health', icon: <Activity size={18} /> },
   { key: 'referrals', label: 'Referrals', icon: <UsersRound size={18} /> },
@@ -362,7 +362,7 @@ export default function App() {
           />
         )}
         {workspace === 'model' && <ModelWorkspace clientReady={client !== null} />}
-        {workspace === 'workflow' && <WorkflowWorkspace clientReady={client !== null} />}
+        {workspace === 'workflow' && <WorkflowWorkspace client={client} />}
         {workspace === 'security' && <CatalogsWorkspace client={client} />}
         {workspace === 'health' && <RepairWorkspace client={client} defaultProjectId={selectedStack?.projectId ?? ''} />}
         {workspace === 'referrals' && <ReferralWorkspace client={client} />}
