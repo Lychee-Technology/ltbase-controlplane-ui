@@ -383,6 +383,43 @@ describe('UserWorkspace', () => {
     });
   });
 
+  it('clears the manager when the user has no reporting line on org save', async () => {
+    mocks.listUsers.mockResolvedValue(sampleUsers);
+    mocks.getAuthConfig.mockResolvedValue(sampleAuthConfig);
+    mocks.listRoles.mockResolvedValue(sampleRoleOptions);
+    mocks.listPolicies.mockResolvedValue(samplePolicyOptions);
+    mocks.getUser.mockResolvedValue(sampleUser1Detail);
+    mocks.moveUserToOrgUnit.mockResolvedValue({});
+    mocks.clearUserManager.mockResolvedValue({});
+
+    render(<UserWorkspace client={makeClient()} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('google')).toBeInTheDocument();
+    });
+
+    await userEvent.click(screen.getByText('google'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Edit Org')).toBeInTheDocument();
+    });
+
+    await userEvent.click(screen.getByText('Edit Org'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Edit Organization')).toBeInTheDocument();
+    });
+
+    // user-1 has no manager, so "Reports To" stays on "No manager" and saving
+    // must take the clear-manager branch rather than set-manager.
+    await userEvent.click(screen.getByText('Save'));
+
+    await waitFor(() => {
+      expect(mocks.clearUserManager).toHaveBeenCalledWith('user-1');
+    });
+    expect(mocks.setUserManager).not.toHaveBeenCalled();
+  });
+
   it('shows policies tab and attaches a policy', async () => {
     mocks.listUsers.mockResolvedValue(sampleUsers);
     mocks.getAuthConfig.mockResolvedValue(sampleAuthConfig);

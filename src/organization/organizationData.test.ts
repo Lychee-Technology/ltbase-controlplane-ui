@@ -208,9 +208,9 @@ describe('parseManagerResult', () => {
 });
 
 describe('parseManagerFromNotFound', () => {
-  it('returns empty user and null manager', () => {
-    const result = parseManagerFromNotFound();
-    expect(result.user.userId).toBe('');
+  it('preserves the user id and returns a null manager', () => {
+    const result = parseManagerFromNotFound('user-1');
+    expect(result.user.userId).toBe('user-1');
     expect(result.manager).toBeNull();
   });
 });

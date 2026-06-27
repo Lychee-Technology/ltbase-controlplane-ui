@@ -219,9 +219,9 @@ export function OrganizationWorkspace({ client }: { client: ControlPlaneClient |
       void loadDirectReports(userId);
     } catch (error: unknown) {
       if (isNotFoundError(error)) {
-        const result = parseManagerFromNotFound();
+        const result = parseManagerFromNotFound(userId);
         setManagerState({ kind: 'ready', result });
-        setDirectReportsState({ kind: 'ready', reports: [] });
+        void loadDirectReports(userId);
       } else {
         setManagerState({ kind: 'error', message: formatControlPlaneError(error) });
       }
@@ -247,6 +247,7 @@ export function OrganizationWorkspace({ client }: { client: ControlPlaneClient |
       return;
     }
     setSaving(true);
+    setSaveError('');
     try {
       await client.createOrgUnit({
         ou_id: value.ouId,
@@ -336,14 +337,14 @@ export function OrganizationWorkspace({ client }: { client: ControlPlaneClient |
     }
   }
 
-  async function handleAttachPolicy(policyId: string) {
+  async function handleAttachPolicy(policyId: string, enforced: boolean) {
     if (!client || !selectedOuId) {
       return;
     }
     setAttaching(true);
     setAttachError('');
     try {
-      await client.attachOrgUnitPolicy(selectedOuId, policyId, { enforced: false });
+      await client.attachOrgUnitPolicy(selectedOuId, policyId, { enforced });
       void loadPolicies(selectedOuId);
     } catch (error: unknown) {
       setAttachError(formatControlPlaneError(error));
@@ -497,6 +498,7 @@ export function OrganizationWorkspace({ client }: { client: ControlPlaneClient |
         allUnits={units}
         parentOptions={parentOptions}
         saving={saving}
+        error={saveError}
         onSave={(value) => void handleCreate(value)}
         onCancel={() => setPage({ kind: 'tree' })}
       />
@@ -516,6 +518,7 @@ export function OrganizationWorkspace({ client }: { client: ControlPlaneClient |
         allUnits={units}
         parentOptions={parentOptions}
         saving={saving}
+        error={saveError}
         onSave={(value) => void handleUpdate(page.ouId, value)}
         onCancel={() => setPage({ kind: 'tree' })}
       />
@@ -573,7 +576,7 @@ export function OrganizationWorkspace({ client }: { client: ControlPlaneClient |
           onTogglePoliciesTab={handleTogglePoliciesTab}
           policies={policies}
           allPolicies={allPolicies}
-          onAttach={(policyId) => void handleAttachPolicy(policyId)}
+          onAttach={(policyId, enforced) => void handleAttachPolicy(policyId, enforced)}
           onDetach={(policyId) => void handleDetachPolicy(policyId)}
           attaching={attaching}
           attachError={attachError}
@@ -673,7 +676,7 @@ function OUDetailPane({
   onTogglePoliciesTab: () => void;
   policies: PoliciesLoadState;
   allPolicies: PolicyOption[];
-  onAttach: (policyId: string) => void;
+  onAttach: (policyId: string, enforced: boolean) => void;
   onDetach: (policyId: string) => void;
   attaching: boolean;
   attachError: string;
@@ -696,7 +699,7 @@ function OUDetailPane({
   deleteError: string;
   onDeleteConfirm: (ouId: string) => void;
   onDeleteCancel: () => void;
-  isConfirmingDelete: boolean | undefined;
+  isConfirmingDelete: boolean;
   saving: boolean;
 }) {
   if (detail.kind === 'loading') {

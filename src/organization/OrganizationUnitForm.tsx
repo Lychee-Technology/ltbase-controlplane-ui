@@ -18,6 +18,7 @@ interface BaseProps {
   allUnits: AuthOrgUnit[];
   parentOptions: AuthOrgUnit[];
   saving: boolean;
+  error: string;
   onCancel: () => void;
 }
 
@@ -35,7 +36,7 @@ interface EditProps extends BaseProps {
 type Props = CreateProps | EditProps;
 
 export function OrganizationUnitForm(props: Props) {
-  const { mode, allUnits, parentOptions, saving, onSave, onCancel } = props;
+  const { mode, allUnits, parentOptions, saving, error, onSave, onCancel } = props;
   const [ouId, setOuId] = useState(mode === 'create' ? '' : props.unit.ouId);
   const [name, setName] = useState(mode === 'create' ? '' : props.unit.name);
   const [parentOuId, setParentOuId] = useState(mode === 'create' ? '' : props.unit.parentOuId);
@@ -68,6 +69,8 @@ export function OrganizationUnitForm(props: Props) {
           </button>
         </div>
       </div>
+
+      {error && <p className="error spaced-below">{error}</p>}
 
       <div className="form-fields">
         {mode === 'edit' && props.unit.ouPath && (

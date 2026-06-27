@@ -58,6 +58,9 @@ export interface OrgTree {
   children: OrgTree[];
 }
 
+// Control-plane responses come in two envelope shapes: list endpoints return a
+// top-level `{ items: [...] }`, while detail endpoints wrap the entity under
+// `{ data: { <entity>: {...} } }`. pluckData unwraps the `data` envelope.
 function pluckData(payload: unknown): Record<string, unknown> {
   if (payload && typeof payload === 'object' && 'data' in payload) {
     const data = (payload as Record<string, unknown>).data;
@@ -148,21 +151,8 @@ export function parseManagerResult(payload: unknown): ManagerResult {
   return { user, manager };
 }
 
-export function parseManagerFromNotFound(): ManagerResult {
-  return {
-    user: {
-      userId: '',
-      provider: '',
-      issuer: '',
-      externalSub: '',
-      primaryOuId: '',
-      reportToUserId: '',
-      createdAt: 0,
-      updatedAt: 0,
-      lastLoginAt: 0,
-    },
-    manager: null,
-  };
+export function parseManagerFromNotFound(userId: string): ManagerResult {
+  return { user: parseOrgUser({ user_id: userId }), manager: null };
 }
 
 export function parseDirectReports(payload: unknown): AuthOrgUser[] {

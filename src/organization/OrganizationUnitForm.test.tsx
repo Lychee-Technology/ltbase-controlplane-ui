@@ -29,6 +29,7 @@ describe('OrganizationUnitForm create mode', () => {
         allUnits={allUnits}
         parentOptions={parentOptions}
         saving={false}
+        error=""
         onSave={vi.fn()}
         onCancel={vi.fn()}
       />,
@@ -44,6 +45,7 @@ describe('OrganizationUnitForm create mode', () => {
         allUnits={allUnits}
         parentOptions={parentOptions}
         saving={false}
+        error=""
         onSave={vi.fn()}
         onCancel={vi.fn()}
       />,
@@ -58,6 +60,7 @@ describe('OrganizationUnitForm create mode', () => {
         allUnits={allUnits}
         parentOptions={parentOptions}
         saving={false}
+        error=""
         onSave={vi.fn()}
         onCancel={vi.fn()}
       />,
@@ -74,6 +77,7 @@ describe('OrganizationUnitForm create mode', () => {
         allUnits={allUnits}
         parentOptions={parentOptions}
         saving={false}
+        error=""
         onSave={onSave}
         onCancel={vi.fn()}
       />,
@@ -98,6 +102,7 @@ describe('OrganizationUnitForm create mode', () => {
         allUnits={allUnits}
         parentOptions={parentOptions}
         saving={true}
+        error=""
         onSave={vi.fn()}
         onCancel={vi.fn()}
       />,
@@ -114,6 +119,7 @@ describe('OrganizationUnitForm create mode', () => {
         allUnits={allUnits}
         parentOptions={parentOptions}
         saving={false}
+        error=""
         onSave={vi.fn()}
         onCancel={onCancel}
       />,
@@ -132,6 +138,7 @@ describe('OrganizationUnitForm edit mode', () => {
         allUnits={allUnits}
         parentOptions={parentOptions}
         saving={false}
+        error=""
         onSave={vi.fn()}
         onCancel={vi.fn()}
       />,
@@ -148,6 +155,7 @@ describe('OrganizationUnitForm edit mode', () => {
         allUnits={allUnits}
         parentOptions={parentOptions}
         saving={false}
+        error=""
         onSave={vi.fn()}
         onCancel={vi.fn()}
       />,
@@ -166,6 +174,7 @@ describe('OrganizationUnitForm edit mode', () => {
         allUnits={allUnits}
         parentOptions={parentOptions}
         saving={false}
+        error=""
         onSave={onSave}
         onCancel={vi.fn()}
       />,

@@ -1,23 +1,20 @@
+import { useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import { truncateUUID } from '../types';
+import type { PolicyOption } from '../users/userData';
 import type { OrgUnitPolicyAttachment } from './organizationData';
-
-interface PolicyOption {
-  policyId: string;
-  name: string;
-  slug: string;
-}
 
 interface Props {
   attachments: OrgUnitPolicyAttachment[];
   allPolicies: PolicyOption[];
-  onAttach: (policyId: string) => void;
+  onAttach: (policyId: string, enforced: boolean) => void;
   onDetach: (policyId: string) => void;
   attaching: boolean;
   attachError: string;
 }
 
 export function OrganizationPoliciesTab({ attachments, allPolicies, onAttach, onDetach, attaching, attachError }: Props) {
+  const [attachEnforced, setAttachEnforced] = useState(false);
   const attachedIds = new Set(attachments.map((a) => a.policyId));
   const availablePolicies = allPolicies.filter((p) => !attachedIds.has(p.policyId));
 
@@ -62,13 +59,23 @@ export function OrganizationPoliciesTab({ attachments, allPolicies, onAttach, on
       {availablePolicies.length > 0 && (
         <div className="spaced-above">
           <h3 className="form-label">Attach a Policy</h3>
+          <label className="org-toggle-label">
+            <input
+              type="checkbox"
+              checked={attachEnforced}
+              onChange={(e) => setAttachEnforced(e.target.checked)}
+              disabled={attaching}
+            />
+            Enforced
+          </label>
           <select
             className="form-input"
             onChange={(e) => {
               const value = e.target.value;
               if (value) {
-                onAttach(value);
+                onAttach(value, attachEnforced);
                 e.target.value = '';
+                setAttachEnforced(false);
               }
             }}
             disabled={attaching}
