@@ -5,6 +5,7 @@ import {
   BUILT_IN_ROLES,
   CATALOG_TABS,
   extractCatalogData,
+  formatServerError,
   validateCatalogJSON,
   type CatalogKind,
 } from './catalogData';
@@ -60,12 +61,6 @@ export function CatalogsWorkspace({ client }: { client: ControlPlaneClient | nul
     void loadCatalog();
   }, [loadCatalog]);
 
-  useEffect(() => {
-    if (state.kind === 'ready') {
-      setEditorText(state.json);
-    }
-  }, [activeTab, state.kind]);
-
   function handleEditorChange(value: string) {
     setEditorText(value);
     setClientError('');
@@ -110,20 +105,6 @@ export function CatalogsWorkspace({ client }: { client: ControlPlaneClient | nul
     } finally {
       setSaving(false);
     }
-  }
-
-  function formatServerError(error: unknown): string {
-    const msg = formatControlPlaneError(error);
-    const obj = error as Record<string, unknown> | null;
-    if (obj?.details) {
-      try {
-        const detailsJSON = JSON.stringify(obj.details, null, 2);
-        return `${msg}\nDetails: ${detailsJSON}`;
-      } catch {
-        return msg;
-      }
-    }
-    return msg;
   }
 
   const activeTabDef = CATALOG_TABS.find((t) => t.kind === activeTab);

@@ -1,3 +1,5 @@
+import { formatControlPlaneError } from '../types';
+
 export type CatalogKind = 'capabilities' | 'actionTemplates' | 'assistantRoles' | 'complianceProfile';
 
 export interface CatalogTabDef {
@@ -43,13 +45,8 @@ export const BUILT_IN_ROLES: BuiltInRoleRef[] = [
 ];
 
 export function extractCatalogData(payload: unknown): string {
-  if (payload && typeof payload === 'object' && 'data' in payload && typeof (payload as Record<string, unknown>).data === 'string') {
-    const raw = (payload as Record<string, unknown>).data as string;
-    return formatJSON(raw);
-  }
   if (payload && typeof payload === 'object' && 'data' in payload) {
-    const data = (payload as Record<string, unknown>).data;
-    return formatJSON(data);
+    return formatJSON((payload as Record<string, unknown>).data);
   }
   return '';
 }
@@ -70,6 +67,20 @@ export function formatJSON(value: unknown): string {
   } catch {
     return String(value);
   }
+}
+
+export function formatServerError(error: unknown): string {
+  const msg = formatControlPlaneError(error);
+  const obj = error as Record<string, unknown> | null;
+  if (obj?.details) {
+    try {
+      const detailsJSON = JSON.stringify(obj.details, null, 2);
+      return `${msg}\nDetails: ${detailsJSON}`;
+    } catch {
+      return msg;
+    }
+  }
+  return msg;
 }
 
 export function validateCatalogJSON(

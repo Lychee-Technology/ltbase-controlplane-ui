@@ -96,6 +96,13 @@ const assistantRolesResponse = {
   data: '{"version":1,"roles":[]}',
 };
 
+// Matches the server default baseline returned when a project's compliance profile is empty
+// (ltbase.api internal/control_plane_compliance_profile.go).
+const complianceBaselineResponse = {
+  project_id: 'proj-1',
+  data: '{"version":1,"controls":[{"id":"capability_must_have_policy","mode":"warn"},{"id":"user_must_hold_required_capability","mode":"block"}]}',
+};
+
 describe('CatalogsWorkspace', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -133,6 +140,45 @@ describe('CatalogsWorkspace', () => {
       expect(screen.getByLabelText('Compliance Profile JSON')).toBeInTheDocument();
     });
     expect(mocks.getComplianceProfile).toHaveBeenCalled();
+  });
+
+  it('shows the empty assistant role catalog returned by the server', async () => {
+    mocks.getCapabilityCatalog.mockResolvedValue(capabilityResponse);
+    mocks.getAssistantRoleCatalog.mockResolvedValue(assistantRolesResponse);
+
+    render(<CatalogsWorkspace client={makeClient()} />);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Capability Catalog JSON')).toBeInTheDocument();
+    });
+
+    await userEvent.click(screen.getByText('Assistant Role Catalog'));
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Assistant Role Catalog JSON')).toBeInTheDocument();
+    });
+    const editor = screen.getByLabelText('Assistant Role Catalog JSON') as HTMLTextAreaElement;
+    expect(editor.value).toContain('"roles": []');
+  });
+
+  it('shows the server default compliance baseline when the profile is empty', async () => {
+    mocks.getCapabilityCatalog.mockResolvedValue(capabilityResponse);
+    mocks.getComplianceProfile.mockResolvedValue(complianceBaselineResponse);
+
+    render(<CatalogsWorkspace client={makeClient()} />);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Capability Catalog JSON')).toBeInTheDocument();
+    });
+
+    await userEvent.click(screen.getByText('Compliance Profile'));
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Compliance Profile JSON')).toBeInTheDocument();
+    });
+    const editor = screen.getByLabelText('Compliance Profile JSON') as HTMLTextAreaElement;
+    expect(editor.value).toContain('user_must_hold_required_capability');
+    expect(editor.value).toContain('"mode": "block"');
   });
 
   it('shows loading state followed by content', async () => {
