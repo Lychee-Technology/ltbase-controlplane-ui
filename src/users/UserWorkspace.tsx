@@ -1,5 +1,5 @@
 import { Trash2 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ControlPlaneClient } from '../api/controlPlaneClient';
 import { formatControlPlaneError, truncateUUID } from '../types';
 import './users.css';
@@ -91,6 +91,7 @@ export function UserWorkspace({
   const [attachError, setAttachError] = useState('');
   const [policyTab, setPolicyTab] = useState(false);
   const [policies, setPolicies] = useState<PolicyLoadState>({ kind: 'idle' });
+  const consumedInitialUserRef = useRef(false);
 
   const loadList = useCallback(async () => {
     if (!client) {
@@ -117,13 +118,17 @@ export function UserWorkspace({
   }, [loadList]);
 
   useEffect(() => {
-    if (initialUserId && client && list.kind === 'ready') {
-      selectUser(initialUserId);
-      if (onInitialUserConsumed) {
-        onInitialUserConsumed();
-      }
+    if (!initialUserId) {
+      // Reset so the next requested user (after the parent clears this one) opens.
+      consumedInitialUserRef.current = false;
+      return;
     }
-  }, [initialUserId, client, list.kind]);
+    if (client && list.kind === 'ready' && !consumedInitialUserRef.current) {
+      consumedInitialUserRef.current = true;
+      selectUser(initialUserId);
+      onInitialUserConsumed?.();
+    }
+  }, [initialUserId, client, list.kind, onInitialUserConsumed]);
 
   useEffect(() => {
     if (!client) {

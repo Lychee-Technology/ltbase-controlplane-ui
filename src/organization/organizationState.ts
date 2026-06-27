@@ -1,4 +1,4 @@
-import type { AuthOrgUnit, AuthOrgUser, OrgUnitPolicyAttachment } from './organizationData';
+import type { AuthOrgUnit, AuthOrgUser, OrgTree, OrgUnitPolicyAttachment } from './organizationData';
 
 export type OrgPage =
   | { kind: 'tree' }
@@ -9,7 +9,7 @@ export type OrgListLoadState =
   | { kind: 'idle' }
   | { kind: 'loading' }
   | { kind: 'error'; message: string }
-  | { kind: 'ready'; units: AuthOrgUnit[]; tree: import('./organizationData').OrgTree[] };
+  | { kind: 'ready'; units: AuthOrgUnit[]; tree: OrgTree[] };
 
 export type DetailLoadState =
   | { kind: 'idle' }

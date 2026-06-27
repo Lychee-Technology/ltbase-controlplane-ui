@@ -231,23 +231,28 @@ export interface OrgChartNode {
   policyAttachments: OrgChartPolicyAttachment[];
 }
 
+export function parseOrgChartPolicyAttachment(payload: unknown): OrgChartPolicyAttachment {
+  const data = payload as Record<string, unknown>;
+  return {
+    ouId: String(data.ou_id ?? ''),
+    policyId: String(data.policy_id ?? ''),
+    enforced: data.enforced === true,
+    createdAt: Number(data.created_at ?? 0),
+    updatedAt: Number(data.updated_at ?? 0),
+  };
+}
+
 export function parseOrgChart(payload: unknown): OrgChartReadModel {
   const data = pluckData(payload);
-  const orgUnits = (Array.isArray(data.org_units) ? data.org_units : []) as Array<Record<string, unknown>>;
-  const users = (Array.isArray(data.users) ? data.users : []) as Array<Record<string, unknown>>;
-  const policyAttachments = (Array.isArray(data.policy_attachments) ? data.policy_attachments : []) as Array<Record<string, unknown>>;
+  const orgUnits = Array.isArray(data.org_units) ? data.org_units : [];
+  const users = Array.isArray(data.users) ? data.users : [];
+  const policyAttachments = Array.isArray(data.policy_attachments) ? data.policy_attachments : [];
 
   return {
     rootOuId: String(data.root_ou_id ?? ''),
-    orgUnits: orgUnits.map((u) => parseOrgUnit(u)),
-    users: users.map((u) => parseOrgUser(u)),
-    policyAttachments: policyAttachments.map((a) => ({
-      ouId: String(a.ou_id ?? ''),
-      policyId: String(a.policy_id ?? ''),
-      enforced: a.enforced === true,
-      createdAt: Number(a.created_at ?? 0),
-      updatedAt: Number(a.updated_at ?? 0),
-    })),
+    orgUnits: orgUnits.map((u: unknown) => parseOrgUnit(u)),
+    users: users.map((u: unknown) => parseOrgUser(u)),
+    policyAttachments: policyAttachments.map((a: unknown) => parseOrgChartPolicyAttachment(a)),
   };
 }
 
