@@ -1,4 +1,4 @@
-import { Activity, AlertTriangle, CheckCircle, Wrench, XCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import type { ControlPlaneClient } from '../api/controlPlaneClient';
 import { formatControlPlaneError, truncateUUID } from '../types';
@@ -221,8 +221,8 @@ function RepairReportView({ state, title }: { state: LoadState; title: string })
         <div className="panel-section">
           <p className="eyebrow">Actions Taken</p>
           <ul className="repair-result-list">
-            {actionsTaken.map((r, i) => (
-              <li key={i} className="repair-result-item">
+            {actionsTaken.map((r) => (
+              <li key={`${r.status}-${r.object}`} className="repair-result-item">
                 <span className={`repair-status-badge ${getRepairStatusClass(r.status)}`}>{r.status}</span>
                 <span className="repair-result-object">{r.object}</span>
                 <span className="repair-result-detail">{r.detail}</span>
@@ -236,8 +236,8 @@ function RepairReportView({ state, title }: { state: LoadState; title: string })
         <div className="panel-section">
           <p className="eyebrow">SQL Objects Checked</p>
           <ul className="repair-result-list">
-            {sqlObjects.map((r, i) => (
-              <li key={i} className="repair-result-item">
+            {sqlObjects.map((r) => (
+              <li key={`${r.status}-${r.object}`} className="repair-result-item">
                 <span className={`repair-status-badge ${getRepairStatusClass(r.status)}`}>{r.status}</span>
                 <span className="repair-result-object">{r.object}</span>
                 <span className="repair-result-detail">{r.detail}</span>
@@ -251,8 +251,8 @@ function RepairReportView({ state, title }: { state: LoadState; title: string })
         <div className="panel-section">
           <p className="eyebrow">Warnings</p>
           <ul className="repair-result-list">
-            {warnings.map((r, i) => (
-              <li key={i} className="repair-result-item">
+            {warnings.map((r) => (
+              <li key={`${r.status}-${r.object}`} className="repair-result-item">
                 <span className={`repair-status-badge ${getRepairStatusClass(r.status)}`}>{r.status}</span>
                 <span className="repair-result-object">{r.object}</span>
                 <span className="repair-result-detail">{r.detail}</span>
@@ -274,8 +274,8 @@ function RepairReportView({ state, title }: { state: LoadState; title: string })
               </tr>
             </thead>
             <tbody>
-              {report.results.map((r, i) => (
-                <tr key={i}>
+              {report.results.map((r) => (
+                <tr key={`${r.status}-${r.object}`}>
                   <td>
                     <span className={`repair-status-badge ${getRepairStatusClass(r.status)}`}>{r.status}</span>
                   </td>

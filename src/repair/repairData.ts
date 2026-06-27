@@ -22,6 +22,8 @@ export interface RepairReport {
 }
 
 export function parseRepairReport(payload: unknown): RepairReport {
+  // pluckData guards against non-object/missing payloads, always returning an object,
+  // so the cast below is safe and no separate top-level typeof check is needed.
   const data = pluckData(payload) as Record<string, unknown>;
   const rawResults = Array.isArray(data.results) ? data.results : [];
   const rawSummary = (data.summary ?? {}) as Record<string, unknown>;
