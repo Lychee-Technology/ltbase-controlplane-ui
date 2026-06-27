@@ -21,6 +21,8 @@ function makeClient(overrides?: Partial<ControlPlaneClient>): ControlPlaneClient
     putCapabilityCatalog: vi.fn(),
     getActionTemplateCatalog: vi.fn(),
     putActionTemplateCatalog: vi.fn(),
+    getAssistantRoleCatalog: vi.fn(),
+    putAssistantRoleCatalog: vi.fn(),
     getComplianceProfile: vi.fn(),
     putComplianceProfile: vi.fn(),
     listReferrals: vi.fn(),

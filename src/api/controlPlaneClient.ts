@@ -10,6 +10,8 @@ export interface ControlPlaneClient {
   putCapabilityCatalog(data: unknown): Promise<unknown>;
   getActionTemplateCatalog(): Promise<unknown>;
   putActionTemplateCatalog(data: unknown): Promise<unknown>;
+  getAssistantRoleCatalog(): Promise<unknown>;
+  putAssistantRoleCatalog(data: unknown): Promise<unknown>;
   getComplianceProfile(): Promise<unknown>;
   putComplianceProfile(data: unknown): Promise<unknown>;
   listReferrals(params?: { status?: string; code?: string }): Promise<unknown>;
@@ -98,6 +100,8 @@ export function createControlPlaneClient(
     putCapabilityCatalog: (data) => put('/catalogs/capabilities', data),
     getActionTemplateCatalog: () => get('/catalogs/action-templates'),
     putActionTemplateCatalog: (data) => put('/catalogs/action-templates', data),
+    getAssistantRoleCatalog: () => get('/catalogs/assistant-roles'),
+    putAssistantRoleCatalog: (data) => put('/catalogs/assistant-roles', data),
     getComplianceProfile: () => get('/compliance-profile'),
     putComplianceProfile: (data) => put('/compliance-profile', data),
     listReferrals: (params) => {
