@@ -832,4 +832,31 @@ describe('createControlPlaneClient', () => {
       expect.objectContaining({ headers: expect.any(Headers) }),
     );
   });
+
+  it('getAssistantRoleCatalog calls GET /api/v1/catalogs/assistant-roles', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: {} }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.getAssistantRoleCatalog();
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/catalogs/assistant-roles',
+      expect.objectContaining({ headers: expect.any(Headers) }),
+    );
+  });
+
+  it('putAssistantRoleCatalog calls PUT /api/v1/catalogs/assistant-roles', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: {} }), { status: 200 }));
+    const client = createControlPlaneClient(stack, 'token-123', fetchImpl as unknown as typeof fetch);
+
+    await client.putAssistantRoleCatalog({ version: 1, roles: [] });
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://control-plane.example.com/api/v1/catalogs/assistant-roles',
+      expect.objectContaining({
+        method: 'PUT',
+        body: JSON.stringify({ version: 1, roles: [] }),
+      }),
+    );
+  });
 });

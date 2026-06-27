@@ -91,6 +91,10 @@ vi.mock('./organization/OrganizationWorkspace', () => ({
   OrganizationWorkspace: ({ client }: { client: unknown; onNavigateUser?: (userId: string) => void }) => <div>Organization workspace ready: {String(client !== null)}</div>,
 }));
 
+vi.mock('./catalogs/CatalogsWorkspace', () => ({
+  CatalogsWorkspace: ({ client }: { client: unknown }) => <div>Catalogs workspace ready: {String(client !== null)}</div>,
+}));
+
 const runtimeConfig: RuntimeConfig = {
   stacks: [
     {

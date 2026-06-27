@@ -25,6 +25,7 @@ import { OrganizationWorkspace } from './organization/OrganizationWorkspace';
 import { ReferralWorkspace } from './referrals/ReferralWorkspace';
 import { BindingPolicyWorkspace } from './bindingPolicies/BindingPolicyWorkspace';
 import { RepairWorkspace } from './repair/RepairWorkspace';
+import { CatalogsWorkspace } from './catalogs/CatalogsWorkspace';
 import type {
   AuthProviderConfig,
   RuntimeConfig,
@@ -43,7 +44,7 @@ const workspaces: Array<{ key: WorkspaceKey; label: string; icon: ReactNode }> =
   { key: 'organization', label: 'Organization', icon: <Database size={18} /> },
   { key: 'model', label: 'Model & Capabilities', icon: <Database size={18} /> },
   { key: 'workflow', label: 'Workflow Authoring', icon: <Database size={18} /> },
-  { key: 'security', label: 'Security & Compliance', icon: <KeyRound size={18} /> },
+  { key: 'security', label: 'Catalogs & Compliance', icon: <KeyRound size={18} /> },
   { key: 'health', label: 'Deployment Health', icon: <Activity size={18} /> },
   { key: 'referrals', label: 'Referrals', icon: <UsersRound size={18} /> },
   { key: 'bindingPolicies', label: 'Binding Policies', icon: <Database size={18} /> },
@@ -362,7 +363,7 @@ export default function App() {
         )}
         {workspace === 'model' && <ModelWorkspace clientReady={client !== null} />}
         {workspace === 'workflow' && <WorkflowWorkspace clientReady={client !== null} />}
-        {workspace === 'security' && <Placeholder title="Security policy editor" description="Roles, policies, bindings, capability assignments, and compliance profile will use the shared draft/apply model." />}
+        {workspace === 'security' && <CatalogsWorkspace client={client} />}
         {workspace === 'health' && <RepairWorkspace client={client} defaultProjectId={selectedStack?.projectId ?? ''} />}
         {workspace === 'referrals' && <ReferralWorkspace client={client} />}
         {workspace === 'bindingPolicies' && <BindingPolicyWorkspace client={client} />}
@@ -418,19 +419,5 @@ function ModelWorkspace({ clientReady }: { clientReady: boolean }) {
       <SchemaWorkspace clientReady={clientReady} />
       <LocalSchemaEditor />
     </div>
-  );
-}
-
-function Placeholder({ title, description }: { title: string; description: string }) {
-  return (
-    <section className="panel">
-      <div className="panel-heading">
-        <div>
-          <p className="eyebrow">V1 workspace</p>
-          <h2>{title}</h2>
-        </div>
-      </div>
-      <p className="muted">{description}</p>
-    </section>
   );
 }
