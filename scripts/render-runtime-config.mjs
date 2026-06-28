@@ -16,9 +16,15 @@ const REQUIRED_STACK_FIELDS = [
   'redirectUri',
 ];
 
-const URL_FIELDS = new Set(['authBaseUrl', 'controlPlaneBaseUrl', 'apiBaseUrl', 'redirectUri', 'supabaseUrl']);
+// Base URLs are canonicalized (trailing slash stripped) to match requireURL in src/config.ts.
+const NORMALIZED_URL_FIELDS = new Set(['authBaseUrl', 'controlPlaneBaseUrl', 'apiBaseUrl']);
 
 const SUPPORTED_PROVIDER_TYPES = new Set(['firebase', 'supabase']);
+
+// Mirrors requireURL in src/config.ts: validate and canonicalize, stripping a trailing slash.
+function normalizeUrl(value) {
+  return new URL(value).toString().replace(/\/$/, '');
+}
 
 export function parseRuntimeConfigEnv(rawValue) {
   if (typeof rawValue !== 'string' || rawValue.trim() === '') {
@@ -64,14 +70,19 @@ function validateStackFields(stack, label) {
     stack[field] = value.trim();
   }
 
-  for (const field of URL_FIELDS) {
-    if (stack[field] !== undefined) {
-      try {
-        new URL(stack[field]);
-      } catch {
-        throw new Error(`${label}: field "${field}" must be a valid URL`);
-      }
+  for (const field of NORMALIZED_URL_FIELDS) {
+    try {
+      stack[field] = normalizeUrl(stack[field]);
+    } catch {
+      throw new Error(`${label}: field "${field}" must be a valid URL`);
     }
+  }
+
+  // redirectUri is preserved exactly (mirrors requireExactURL in src/config.ts) — validate only.
+  try {
+    new URL(stack.redirectUri);
+  } catch {
+    throw new Error(`${label}: field "redirectUri" must be a valid URL`);
   }
 
   if (!Array.isArray(stack.authProviders) || stack.authProviders.length === 0) {
@@ -124,8 +135,9 @@ function validateAuthProviders(providers, stackKey, label) {
       if (typeof suUrl !== 'string' || suUrl.trim() === '') {
         throw new Error(`${plabel}: field "supabaseUrl" is required`);
       }
+      // Mirrors requireURL in src/config.ts (used for supabaseUrl): canonicalize the value.
       try {
-        new URL(suUrl.trim());
+        provider.supabaseUrl = normalizeUrl(suUrl.trim());
       } catch {
         throw new Error(`${plabel}: field "supabaseUrl" must be a valid URL`);
       }

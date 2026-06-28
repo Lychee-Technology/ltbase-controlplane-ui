@@ -242,6 +242,34 @@ describe('parseRuntimeConfigEnv', () => {
     expect(result.stacks[0].key).toBe('prod');
     expect(result.stacks[0].label).toBe('Production');
   });
+
+  it('strips trailing slashes from base URL fields (matches runtime requireURL)', () => {
+    const config = makeValidConfig({
+      authBaseUrl: 'https://auth.example.com/',
+      controlPlaneBaseUrl: 'https://control.example.com/',
+      apiBaseUrl: 'https://api.example.com/',
+    });
+    const result = parseRuntimeConfigEnv(config);
+    expect(result.stacks[0].authBaseUrl).toBe('https://auth.example.com');
+    expect(result.stacks[0].controlPlaneBaseUrl).toBe('https://control.example.com');
+    expect(result.stacks[0].apiBaseUrl).toBe('https://api.example.com');
+  });
+
+  it('canonicalizes supabaseUrl (matches runtime requireURL)', () => {
+    const config = makeValidConfig({
+      authProviders: [
+        { type: 'supabase', name: 'su', label: 'SU', supabaseUrl: 'https://su.co/', supabaseAnonKey: 'k' },
+      ],
+    });
+    const result = parseRuntimeConfigEnv(config);
+    expect(result.stacks[0].authProviders[0].supabaseUrl).toBe('https://su.co');
+  });
+
+  it('preserves redirectUri exactly (matches runtime requireExactURL)', () => {
+    const config = makeValidConfig({ redirectUri: 'https://admin.example.com/auth/callback/' });
+    const result = parseRuntimeConfigEnv(config);
+    expect(result.stacks[0].redirectUri).toBe('https://admin.example.com/auth/callback/');
+  });
 });
 
 describe('renderRuntimeConfig', () => {
