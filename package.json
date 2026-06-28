@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
+    "build:pages": "pnpm run render-runtime-config && pnpm run build",
     "build:release-artifact": "pnpm run build && node ./scripts/package-release-artifact.mjs",
     "preview": "vite preview",
     "render-runtime-config": "node ./scripts/render-runtime-config.mjs",
