@@ -44,6 +44,59 @@ The app loads `/ltbase-controlplane.config.json` at runtime. This file must cont
 Customer deployment repositories render this file from their own `CONTROLPLANE_UI_STACK_CONFIG` deployment variable during rollout, then the reusable deployment workflows inject it into the official Control Plane UI release artifact before publishing to Cloudflare Pages.
 The built site ships `_redirects` so direct OAuth callback hits to `/auth/callback` are rewritten to `index.html` and handled by the SPA.
 
+## Cloudflare Pages Deployment
+
+The UI is deployed to Cloudflare Pages. Runtime configuration is injected at build time via a single environment variable.
+
+### Environment Variable
+
+Set `CONTROLPLANE_UI_STACK_CONFIG` as a plaintext environment variable in Cloudflare Pages (not a secret — it contains only non-secret values).
+
+The value must be a JSON object with a `stacks` array. Example:
+
+```json
+{
+  "stacks": [
+    {
+      "key": "prod",
+      "label": "Production",
+      "projectId": "11111111-1111-4111-8111-111111111111",
+      "authBaseUrl": "https://auth.example.com",
+      "controlPlaneBaseUrl": "https://control-plane.example.com",
+      "apiBaseUrl": "https://api.example.com",
+      "oidcClientId": "ltbase-controlplane-ui",
+      "redirectUri": "https://admin.example.com/auth/callback",
+      "authProviders": [
+        {
+          "type": "firebase",
+          "name": "firebase-google",
+          "label": "Firebase Google",
+          "firebaseProjectId": "ltbase-prod",
+          "firebaseApiKey": "public-firebase-api-key"
+        }
+      ]
+    }
+  ]
+}
+```
+
+Minify before pasting into Cloudflare Pages UI. The build fails fast with a clear error if the variable is missing, malformed, or missing required fields.
+
+### Build Settings
+
+| Setting | Value |
+|---------|-------|
+| Build command | `pnpm run build:pages` |
+| Output directory | `dist` |
+
+The `build:pages` script runs `render-runtime-config` (which writes `public/ltbase-controlplane.config.json` from the env var) then `vite build`. The built site includes this file at `/ltbase-controlplane.config.json`.
+
+### Local Verification
+
+```bash
+CONTROLPLANE_UI_STACK_CONFIG='{"stacks":[...]}' pnpm run build:pages
+```
+
 ## Schema Editor Boundary
 
 The local JSON Schema editor is intentionally output-only:

@@ -5,6 +5,27 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const defaultOutputPath = path.resolve(__dirname, '..', 'public', 'ltbase-controlplane.config.json');
 
+const REQUIRED_STACK_FIELDS = [
+  'key',
+  'label',
+  'projectId',
+  'authBaseUrl',
+  'controlPlaneBaseUrl',
+  'apiBaseUrl',
+  'oidcClientId',
+  'redirectUri',
+];
+
+// Base URLs are canonicalized (trailing slash stripped) to match requireURL in src/config.ts.
+const NORMALIZED_URL_FIELDS = new Set(['authBaseUrl', 'controlPlaneBaseUrl', 'apiBaseUrl']);
+
+const SUPPORTED_PROVIDER_TYPES = new Set(['firebase', 'supabase']);
+
+// Mirrors requireURL in src/config.ts: validate and canonicalize, stripping a trailing slash.
+function normalizeUrl(value) {
+  return new URL(value).toString().replace(/\/$/, '');
+}
+
 export function parseRuntimeConfigEnv(rawValue) {
   if (typeof rawValue !== 'string' || rawValue.trim() === '') {
     throw new Error('CONTROLPLANE_UI_STACK_CONFIG repo variable is not set');
@@ -21,7 +42,111 @@ export function parseRuntimeConfigEnv(rawValue) {
     throw new Error('CONTROLPLANE_UI_STACK_CONFIG must contain at least one stack');
   }
 
+  const keys = new Set();
+  for (let i = 0; i < parsed.stacks.length; i++) {
+    const stack = parsed.stacks[i];
+    const label = `stack[${i}]`;
+    validateStackFields(stack, label);
+    if (keys.has(stack.key)) {
+      throw new Error(`${label}: duplicate stack key "${stack.key}"`);
+    }
+    keys.add(stack.key);
+    validateAuthProviders(stack.authProviders, stack.key, `${label}.authProviders`);
+  }
+
   return parsed;
+}
+
+function validateStackFields(stack, label) {
+  if (!stack || typeof stack !== 'object' || Array.isArray(stack)) {
+    throw new Error(`${label}: must be an object`);
+  }
+
+  for (const field of REQUIRED_STACK_FIELDS) {
+    const value = stack[field];
+    if (typeof value !== 'string' || value.trim() === '') {
+      throw new Error(`${label}: field "${field}" is required`);
+    }
+    stack[field] = value.trim();
+  }
+
+  for (const field of NORMALIZED_URL_FIELDS) {
+    try {
+      stack[field] = normalizeUrl(stack[field]);
+    } catch {
+      throw new Error(`${label}: field "${field}" must be a valid URL`);
+    }
+  }
+
+  // redirectUri is preserved exactly (mirrors requireExactURL in src/config.ts) — validate only.
+  try {
+    new URL(stack.redirectUri);
+  } catch {
+    throw new Error(`${label}: field "redirectUri" must be a valid URL`);
+  }
+
+  if (!Array.isArray(stack.authProviders) || stack.authProviders.length === 0) {
+    throw new Error(`${label}: field "authProviders" must be a non-empty array`);
+  }
+}
+
+function validateAuthProviders(providers, stackKey, label) {
+  const names = new Set();
+  for (let i = 0; i < providers.length; i++) {
+    const provider = providers[i];
+    const plabel = `${label}[${i}]`;
+
+    if (!provider || typeof provider !== 'object' || Array.isArray(provider)) {
+      throw new Error(`${plabel}: must be an object`);
+    }
+
+    const type = provider.type;
+    if (typeof type !== 'string' || !SUPPORTED_PROVIDER_TYPES.has(type)) {
+      throw new Error(`${plabel}: unsupported or missing auth provider type "${type}"`);
+    }
+
+    const name = provider.name;
+    if (typeof name !== 'string' || name.trim() === '') {
+      throw new Error(`${plabel}: field "name" is required`);
+    }
+    if (names.has(name)) {
+      throw new Error(`${plabel}: duplicate auth provider name "${name}" in stack "${stackKey}"`);
+    }
+    names.add(name);
+
+    const plabel2 = provider.label;
+    if (typeof plabel2 !== 'string' || plabel2.trim() === '') {
+      throw new Error(`${plabel}: field "label" is required`);
+    }
+
+    if (type === 'firebase') {
+      const fbId = provider.firebaseProjectId;
+      if (typeof fbId !== 'string' || fbId.trim() === '') {
+        throw new Error(`${plabel}: field "firebaseProjectId" is required`);
+      }
+      const fbKey = provider.firebaseApiKey;
+      if (typeof fbKey !== 'string' || fbKey.trim() === '') {
+        throw new Error(`${plabel}: field "firebaseApiKey" is required`);
+      }
+    }
+
+    if (type === 'supabase') {
+      const suUrl = provider.supabaseUrl;
+      if (typeof suUrl !== 'string' || suUrl.trim() === '') {
+        throw new Error(`${plabel}: field "supabaseUrl" is required`);
+      }
+      // Mirrors requireURL in src/config.ts (used for supabaseUrl): canonicalize the value.
+      try {
+        provider.supabaseUrl = normalizeUrl(suUrl.trim());
+      } catch {
+        throw new Error(`${plabel}: field "supabaseUrl" must be a valid URL`);
+      }
+      const suKey = provider.supabaseAnonKey;
+      if (typeof suKey !== 'string' || suKey.trim() === '') {
+        throw new Error(`${plabel}: field "supabaseAnonKey" is required`);
+      }
+    }
+  }
 }
 
 export async function renderRuntimeConfig(rawValue, outputPath = defaultOutputPath) {
